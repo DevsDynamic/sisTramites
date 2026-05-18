@@ -8,10 +8,17 @@ class Plan extends Model
 {
     protected $fillable = [
         'name',
+        'description',
         'price',
+        'duration_days',
         'max_users',
-        'max_documents',
         'max_signatures',
-        'is_trial'
+        'max_documents',
+        'is_active',
     ];
+
+    public function tenants()
+    {
+        return $this->hasMany(Tenant::class);
+    }
 }

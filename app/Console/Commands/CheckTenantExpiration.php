@@ -26,7 +26,7 @@ class CheckTenantExpiration extends Command
      */
     public function handle()
     {
-        $tenants = Tenant::where('ends_at', '<', now())
+        $tenants = Tenant::where('expires_at', '<', now())
             ->where('status', 'active')
             ->get();
 

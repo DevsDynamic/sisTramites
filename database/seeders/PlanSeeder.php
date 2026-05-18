@@ -17,22 +17,18 @@ class PlanSeeder extends Seeder
             'name' => 'Trial',
             'price' => 0,
             'max_users' => 1,
-            'max_documents' => 50,
-            'is_trial' => true,
         ]);
 
         Plan::create([
             'name' => 'Básico',
             'price' => 49.90,
             'max_users' => 3,
-            'max_documents' => 500,
         ]);
 
         Plan::create([
             'name' => 'Premium',
             'price' => 99.90,
             'max_users' => 10,
-            'max_documents' => 2000,
         ]);
     }
 }

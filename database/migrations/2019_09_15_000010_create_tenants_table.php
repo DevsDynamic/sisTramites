@@ -16,12 +16,61 @@ class CreateTenantsTable extends Migration
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
-            $table->string('id')->primary();
-
-            // your custom columns may go here
+            $table->uuid('id')->primary();
+            $table->json('data')->nullable();
+            /*
+            |--------------------------------------------------------------------------
+            | EMPRESA
+            |--------------------------------------------------------------------------
+            */
+            $table->string('business_name'); //RAZON SOCIAL
+            $table->string('trade_name') // NOMBRE COMERCIAL
+                ->nullable();
+            $table->string('ruc', 20)->unique();
+            /*
+            |--------------------------------------------------------------------------
+            | CONTACTO
+            |--------------------------------------------------------------------------
+            */
+            $table->string('email');
+            $table->string('phone')->nullable();
+            /*
+            |--------------------------------------------------------------------------
+            | PLAN / SAAS
+            |--------------------------------------------------------------------------
+            */
+            $table->foreignId('plan_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+            $table->enum('status', [
+                'active',
+                'suspended',
+                'expired',
+            ])->default('active');
+            /*
+            |--------------------------------------------------------------------------
+            | SUSCRIPCIÓN
+            |--------------------------------------------------------------------------
+            */
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            /*
+            |--------------------------------------------------------------------------
+            | CONFIGURACIÓN FUTURA
+            |--------------------------------------------------------------------------
+            */
+            $table->json('settings')->nullable();
+            /*
+            |--------------------------------------------------------------------------
+            | METADATA
+            |--------------------------------------------------------------------------
+            */
+            $table->boolean('onboarding_completed')->default(false);
+            $table->string('sunat_user')->nullable();
+            $table->string('sunat_password')->nullable();
 
             $table->timestamps();
-            $table->json('data')->nullable();
         });
     }
 

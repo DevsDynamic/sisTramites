@@ -17,5 +17,6 @@ class DatabaseSeeder extends Seeder
     {
         //Colocar seeder en orden de creación
         $this->call(AdminSeeder::class);
+        $this->call(PlanSeeder::class);
     }
 }

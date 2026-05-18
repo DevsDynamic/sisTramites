@@ -3,8 +3,22 @@
 namespace App\Models;
 
 use Stancl\Tenancy\Database\Models\Domain as BaseDomain;
+use Stancl\Tenancy\Database\Models\Tenant;
 
 class Domain extends BaseDomain
 {
-    // Puedes agregar campos extra si quieres luego
+    protected $fillable = [
+        'domain',
+    ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELACIÓN
+    |--------------------------------------------------------------------------
+    */
+
+    public function tenant()
+    {
+        return $this->belongsTo(Tenant::class);
+    }
 }

@@ -1,148 +1,171 @@
 <?php
 
-declare(strict_types=1);
-
 namespace App\Providers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+
 use Stancl\JobPipeline\JobPipeline;
+
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Jobs;
-use Stancl\Tenancy\Listeners;
-use Stancl\Tenancy\Middleware;
+
+use App\Jobs\Tenancy\CreateTenantAdmin;
+use App\Jobs\Tenancy\MigrateTenantDatabase;
+use App\Jobs\Tenancy\SeedTenantDatabase;
 
 class TenancyServiceProvider extends ServiceProvider
 {
-    // By default, no namespace is used to support the callable array syntax.
-    public static string $controllerNamespace = '';
+    public array $events = [
 
-    public function events()
+        Events\TenantCreated::class => [
+
+            Jobs\CreateDatabase::class,
+
+            MigrateTenantDatabase::class,
+
+            SeedTenantDatabase::class,
+
+            CreateTenantAdmin::class,
+
+        ],
+
+        Events\TenantDeleted::class => [
+
+            Jobs\DeleteDatabase::class,
+
+        ],
+
+    ];
+
+    public function boot(): void
     {
-        return [
-            // Tenant events
-            Events\CreatingTenant::class => [],
-            Events\TenantCreated::class => [
-                JobPipeline::make([
-                    Jobs\CreateDatabase::class,
-                    Jobs\MigrateDatabase::class,
-                    // Jobs\SeedDatabase::class,
+        /*
+        |--------------------------------------------------------------------------
+        | Tenant pipelines
+        |--------------------------------------------------------------------------
+        */
 
-                    // Your own jobs to prepare the tenant.
-                    // Provision API keys, create S3 buckets, anything you want!
+        foreach ($this->events as $event => $listeners) {
 
-                ])->send(function (Events\TenantCreated $event) {
-                    return $event->tenant;
-                })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
-            ],
-            Events\SavingTenant::class => [],
-            Events\TenantSaved::class => [],
-            Events\UpdatingTenant::class => [],
-            Events\TenantUpdated::class => [],
-            Events\DeletingTenant::class => [],
-            Events\TenantDeleted::class => [
-                JobPipeline::make([
-                    Jobs\DeleteDatabase::class,
-                ])->send(function (Events\TenantDeleted $event) {
-                    return $event->tenant;
-                })->shouldBeQueued(false), // `false` by default, but you probably want to make this `true` for production.
-            ],
-
-            // Domain events
-            Events\CreatingDomain::class => [],
-            Events\DomainCreated::class => [],
-            Events\SavingDomain::class => [],
-            Events\DomainSaved::class => [],
-            Events\UpdatingDomain::class => [],
-            Events\DomainUpdated::class => [],
-            Events\DeletingDomain::class => [],
-            Events\DomainDeleted::class => [],
-
-            // Database events
-            Events\DatabaseCreated::class => [],
-            Events\DatabaseMigrated::class => [],
-            Events\DatabaseSeeded::class => [],
-            Events\DatabaseRolledBack::class => [],
-            Events\DatabaseDeleted::class => [],
-
-            // Tenancy events
-            Events\InitializingTenancy::class => [],
-            Events\TenancyInitialized::class => [
-                Listeners\BootstrapTenancy::class,
-            ],
-
-            Events\EndingTenancy::class => [],
-            Events\TenancyEnded::class => [
-                Listeners\RevertToCentralContext::class,
-            ],
-
-            Events\BootstrappingTenancy::class => [],
-            Events\TenancyBootstrapped::class => [],
-            Events\RevertingToCentralContext::class => [],
-            Events\RevertedToCentralContext::class => [],
-
-            // Resource syncing
-            Events\SyncedResourceSaved::class => [
-                Listeners\UpdateSyncedResource::class,
-            ],
-
-            // Fired only when a synced resource is changed in a different DB than the origin DB (to avoid infinite loops)
-            Events\SyncedResourceChangedInForeignDatabase::class => [],
-        ];
-    }
-
-    public function register()
-    {
-        //
-    }
-
-    public function boot()
-    {
-        $this->bootEvents();
-        $this->mapRoutes();
-
-        $this->makeTenancyMiddlewareHighestPriority();
-    }
-
-    protected function bootEvents()
-    {
-        foreach ($this->events() as $event => $listeners) {
-            foreach ($listeners as $listener) {
-                if ($listener instanceof JobPipeline) {
-                    $listener = $listener->toListener();
-                }
-
-                Event::listen($event, $listener);
+            if (empty($listeners)) {
+                continue;
             }
-        }
-    }
 
-    protected function mapRoutes()
-    {
-        $this->app->booted(function () {
-            if (file_exists(base_path('routes/tenant.php'))) {
-                Route::namespace(static::$controllerNamespace)
-                    ->group(base_path('routes/tenant.php'));
+            $pipeline = JobPipeline::make($listeners)
+                ->send(fn($event) => $event->tenant)
+                ->toListener();
+
+            Event::listen($event, $pipeline);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | When tenancy initializes
+        |--------------------------------------------------------------------------
+        */
+
+        Event::listen(
+            Events\TenancyInitialized::class,
+            function (Events\TenancyInitialized $event) {
+
+                $database = $event
+                    ->tenancy
+                    ->tenant
+                    ->database()
+                    ->getName();
+
+                config([
+                    'database.connections.tenant.database' => $database,
+                ]);
+
+                DB::purge('tenant');
+
+                DB::reconnect('tenant');
+
+                app(\Spatie\Permission\PermissionRegistrar::class
+                )->forgetCachedPermissions();
             }
-        });
-    }
+        );
 
-    protected function makeTenancyMiddlewareHighestPriority()
-    {
-        $tenancyMiddleware = [
-            // Even higher priority than the initialization middleware
-            Middleware\PreventAccessFromCentralDomains::class,
+        /*
+        |--------------------------------------------------------------------------
+        | When tenancy ends
+        |--------------------------------------------------------------------------
+        */
 
-            Middleware\InitializeTenancyByDomain::class,
-            Middleware\InitializeTenancyBySubdomain::class,
-            Middleware\InitializeTenancyByDomainOrSubdomain::class,
-            Middleware\InitializeTenancyByPath::class,
-            Middleware\InitializeTenancyByRequestData::class,
-        ];
+        Event::listen(
+            Events\TenancyEnded::class,
+            function () {
 
-        foreach (array_reverse($tenancyMiddleware) as $middleware) {
-            $this->app[\Illuminate\Contracts\Http\Kernel::class]->prependToMiddlewarePriority($middleware);
-        }
+                DB::purge('tenant');
+
+                DB::setDefaultConnection('mysql');
+            }
+        );
     }
 }
+
+// namespace App\Providers;
+
+// use Illuminate\Support\Facades\Event;
+// use Illuminate\Support\ServiceProvider;
+// use Stancl\Tenancy\Events;
+// use Stancl\Tenancy\Jobs;
+// use Stancl\JobPipeline\JobPipeline;
+// use App\Jobs\Tenancy\MigrateTenantDatabase;
+// use App\Jobs\Tenancy\CreateTenantAdmin;
+// use App\Jobs\Tenancy\SeedTenantDatabase;
+// use Illuminate\Support\Facades\DB;
+
+// class TenancyServiceProvider extends ServiceProvider
+// {
+//     public array $events = [
+//         Events\TenantCreated::class => [
+//             Jobs\CreateDatabase::class,
+//             MigrateTenantDatabase::class,  // ← nuestro job propio
+//             SeedTenantDatabase::class,  // ← FALTA ESTE
+//             CreateTenantAdmin::class,
+//         ],
+
+//         Events\TenantUpdated::class => [],
+//         Events\TenantDeleted::class => [
+//             Jobs\DeleteDatabase::class,
+//         ],
+//     ];
+
+//     public function boot(): void
+//     {
+//         // Pipeline de creación
+//         foreach ($this->events as $event => $listeners) {
+//             if (empty($listeners)) continue;
+
+//             $pipeline = JobPipeline::make($listeners)
+//                 ->send(fn($event) => $event->tenant)
+//                 ->toListener();
+
+//             Event::listen($event, $pipeline);
+//         }
+
+//         // ← ESTO ES LO CLAVE: cada vez que tenancy se inicializa
+//         Event::listen(Events\TenancyInitialized::class, function (Events\TenancyInitialized $event) {
+//             $dbName = $event->tenancy->tenant->database()->getName();
+
+//             config(['database.connections.tenant.database' => $dbName]);
+//             DB::purge('tenant');
+//             DB::reconnect('tenant');
+//             DB::setDefaultConnection('tenant');
+
+//             // Limpiar cache de Spatie
+//             app(\Spatie\Permission\PermissionRegistrar::class)
+//                 ->forgetCachedPermissions();
+//         });
+
+//         // Restaurar conexión central cuando termina el contexto tenant
+//         Event::listen(Events\TenancyEnded::class, function () {
+//             DB::setDefaultConnection('mysql');
+//             DB::purge('tenant');
+//         });
+//     }
+// }

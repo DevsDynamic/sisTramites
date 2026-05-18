@@ -13,8 +13,43 @@ class CheckTenantStatus
      *
      * @param  Closure(Request): (Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle($request, Closure $next)
     {
+        $tenant = tenant();
+
+        if (!$tenant) {
+            return $next($request);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Suspendido
+        |--------------------------------------------------------------------------
+        */
+
+        if ($tenant->status === 'suspended') {
+
+            return response()->view(
+                'tenant.suspended'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Expirado
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            $tenant->expires_at &&
+            now()->greaterThan($tenant->expires_at)
+        ) {
+
+            return response()->view(
+                'tenant.expired'
+            );
+        }
+
         return $next($request);
     }
 }
