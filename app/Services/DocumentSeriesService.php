@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\DocumentSeries;
+use App\Models\Tenant\DocumentSeries;
 use Illuminate\Support\Facades\DB;
 
 class DocumentSeriesService

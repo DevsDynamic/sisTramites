@@ -275,11 +275,137 @@
         pointer-events: none;
     }
 
-    /* MENU */
+    /*** MENU */
     .tenant-menu {
         display: flex;
         flex-direction: column;
         gap: 6px;
+    }
+
+    /* SECTION TITLE */
+    .tenant-menu-section {
+        position: relative;
+    }
+
+    .tenant-menu-label {
+        /* color: rgba(255, 255, 255, .55); */
+        font-size: 11px;
+        letter-spacing: .08em;
+        font-weight: 700;
+    }
+
+    .tenant-menu-section small {
+        display: block;
+        padding-left: 8px;
+    }
+
+    /* DROPDOWN */
+    .tenant-menu-dropdown {
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* TOGGLE */
+    .tenant-menu-toggle {
+        position: relative;
+    }
+
+    /* CHEVRON */
+    .tenant-menu-toggle .ti-chevron-down {
+        transition:
+            transform .25s ease;
+    }
+
+    /* ROTATE */
+    .tenant-menu-toggle[aria-expanded="true"] .ti-chevron-down {
+        transform: rotate(180deg);
+    }
+
+    /* SUBMENU */
+    .tenant-submenu {
+        margin-top: 6px;
+        margin-left: 14px;
+
+        padding-left: 14px;
+
+        border-left:
+            1px solid rgba(255, 255, 255, .08);
+
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    /* SUBMENU ITEMS */
+    .tenant-submenu .tenant-menu-item {
+
+        padding:
+            10px 12px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+
+        opacity: .92;
+    }
+
+    /* SUBMENU ACTIVE */
+    .tenant-submenu .tenant-menu-item.active {
+
+        background:
+            rgba(255, 255, 255, .12);
+
+        color: white;
+
+        box-shadow: none;
+    }
+
+    /* BADGES */
+    .tenant-submenu .badge {
+        font-size: 10px;
+    }
+
+    /*** SEPARATION */
+    .tenant-menu-section:not(:first-child) {
+        margin-top: 28px !important;
+    }
+
+    /* MENU ARROW */
+    .menu-arrow {
+        transition:
+            transform .25s ease;
+    }
+
+    /* ROTATE WHEN OPEN */
+    .tenant-menu-item[aria-expanded="true"] .menu-arrow {
+        transform: rotate(180deg);
+    }
+
+    /* SUBMENU */
+    .collapse .tenant-menu-item {
+        padding:
+            10px 14px;
+
+        border-radius: 12px;
+
+        font-size: 14px;
+
+        opacity: .92;
+    }
+
+    /* SUBMENU ACTIVE */
+    .collapse .tenant-menu-item.active {
+        background:
+            color-mix(in srgb,
+                white 16%,
+                transparent);
+
+        color:
+            var(--tenant-sidebar-text);
+
+        font-weight: 600;
+
+        transform: translateX(2px);
     }
 
     /* ITEM */

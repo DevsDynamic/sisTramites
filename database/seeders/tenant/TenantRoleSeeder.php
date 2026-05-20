@@ -35,11 +35,21 @@ class TenantRoleSeeder extends Seeder
             'areas.edit',
             'areas.delete',
 
+            'document-types.view',
+            'document-types.create',
+            'document-types.edit',
+            'document-types.delete',
+
             'documents.view',
             'documents.create',
             'documents.edit',
             'documents.delete',
             'documents.sign',
+
+            'document-series.view',
+            'document-series.create',
+            'document-series.edit',
+            'document-series.delete',
 
             'signature.view',
             'signature.create',

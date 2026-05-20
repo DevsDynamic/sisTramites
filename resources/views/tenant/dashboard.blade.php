@@ -23,7 +23,7 @@
                 <div class="text-secondary mb-2">Usuarios</div>
 
                 <div class="display-5 fw-bold">
-                    {{ \App\Models\Tenant\TenantUser::count() }}
+                    {{ $stats['users'] }}
                 </div>
             </div>
         </div>
@@ -62,7 +62,7 @@
                 <div class="d-flex justify-content-between mb-3">
                     <h5 class="fw-bold">📥 Mi Bandeja</h5>
 
-                    <a href="{{ route('tenant.inbox') }}" class="btn btn-sm btn-primary">
+                    <a href="{{ route('tenant.documents.inbox') }}" class="btn btn-sm btn-primary">
                         Ver todo
                     </a>
                 </div>

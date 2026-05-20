@@ -66,12 +66,7 @@ class Tenant extends BaseTenant implements TenantWithDatabase
         return $this->belongsTo(Plan::class);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | HELPERS
-    |--------------------------------------------------------------------------
-    */
-
+    /* HELPERS */
     public function isExpired(): bool
     {
         return $this->expires_at

@@ -15,13 +15,13 @@
                     {{ tenant('expires_at') ? \Carbon\Carbon::parse(tenant('expires_at'))->format('d/m/Y') : '--' }}
                 </div>
                 <div>
-                    @php
+                    {{-- @php
                         $count = \App\Models\Tenant\Notification::where('user_id', auth()->id())
                             ->where('read', false)
                             ->count();
                     @endphp
 
-                    <a href="{{ route('tenant.notifications') }}" class="btn-icon position-relative">
+                    <a href="{{ route('tenant.notifications.index') }}" class="btn-icon position-relative">
                         <i class="ti ti-bell"></i>
 
                         @if ($count > 0)
@@ -29,11 +29,11 @@
                                 {{ $count }}
                             </span>
                         @endif
-                    </a>
+                    </a> --}}
 
-                    {{-- <span id="notif-count" class="badge bg-danger">
+                    <span id="notif-count" class="badge bg-danger">
                         0
-                    </span> --}}
+                    </span>
                 </div>
                 {{-- DARK MODE --}}
                 <button class="btn btn-icon" onclick="toggleDarkMode()">

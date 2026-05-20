@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Tenant;
+namespace App\Http\Controllers\Tenant\Documents;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\Document;
@@ -24,6 +24,7 @@ class DocumentController extends Controller
      */
     public function index(Request $request)
     {
+        // dd(tenant(), config('database.connections.tenant.database'));
         $query = Document::query();
 
         if ($request->search) {
@@ -39,6 +40,8 @@ class DocumentController extends Controller
 
         return view('tenant.documents.index', compact('documents'));
     }
+
+    
 
     /**
      * FORM CREATE

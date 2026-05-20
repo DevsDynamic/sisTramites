@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Tenant;
+namespace App\Http\Controllers\Tenant\Documents;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\DocumentFlow;
@@ -31,5 +31,25 @@ class DocumentInboxController extends Controller
         $flows = $query->latest()->paginate(10);
 
         return view('tenant.inbox.index', compact('flows'));
+    }
+
+    public function outbox()
+    {
+        return view('tenant.inbox.outbox');
+    }
+
+    public function tracking()
+    {
+        return view('tenant.inbox.tracking');
+    }
+
+    public function search()
+    {
+        return view('tenant.inbox.search');
+    }
+
+    public function archived()
+    {
+        return view('tenant.inbox.archived');
     }
 }

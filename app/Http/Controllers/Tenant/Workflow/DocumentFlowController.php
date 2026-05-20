@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Tenant;
+namespace App\Http\Controllers\Tenant\Workflow;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant\DocumentFlow;
@@ -59,5 +59,10 @@ class DocumentFlowController extends Controller
         );
 
         return back()->with('success', 'Documento derivado');
+    }
+
+    public function flows()
+    {
+        return view('tenant.signature.index');
     }
 }

@@ -9,15 +9,20 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 use App\Http\Controllers\Tenant\OnboardingController;
 use App\Http\Controllers\Tenant\AreaController;
 use App\Http\Controllers\Tenant\DashboardController;
-use App\Http\Controllers\Tenant\DocumentController;
-use App\Http\Controllers\Tenant\DocumentFlowController;
-use App\Http\Controllers\Tenant\DocumentInboxController;
-use App\Http\Controllers\Tenant\DocumentReportController;
-use App\Http\Controllers\Tenant\DocumentSearchController;
 use App\Http\Controllers\Tenant\TenantUserController;
 use App\Http\Controllers\Tenant\RoleController;
 use App\Http\Controllers\Tenant\DocumentTypeController;
-use App\Http\Controllers\Tenant\NotificationController;
+use App\Http\Controllers\Tenant\Documents\DocumentController;
+use App\Http\Controllers\Tenant\Documents\DocumentInboxController;
+use App\Http\Controllers\Tenant\Documents\DocumentReportController;
+use App\Http\Controllers\Tenant\Documents\DocumentSeriesController;
+use App\Http\Controllers\Tenant\Workflow\DocumentFlowController;
+use App\Http\Controllers\Tenant\Workflow\SlaController;
+use App\Http\Controllers\Tenant\Workflow\WorkflowRuleController;
+use App\Http\Controllers\Tenant\Analytics\DocumentAnalyticsController;
+use App\Http\Controllers\Tenant\Notifications\NotificationController;
+
+use App\Http\Controllers\Tenant\Signature\SignatureController;
 
 /* TENANT ROUTES */
 
@@ -93,36 +98,118 @@ Route::middleware([
             Route::get('/', function () {
                 return redirect()->route('tenant.dashboard');
             });
-            Route::get('/dashboard', [DashboardController::class, 'index'])
-                ->name('dashboard');
-            Route::resource('areas', AreaController::class)
-                ->except([
-                    'create',
-                    'edit',
-                    'show',
-                ]);
-            Route::resource(
-                'users',
-                TenantUserController::class
-            );
+            Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+            /* ORGANIZACIÓN */
+            Route::resource('areas', AreaController::class)->except(['create', 'edit', 'show']);
+            Route::resource('users', TenantUserController::class);
             Route::resource('roles', RoleController::class);
 
+            /* CONFIGURACIÓN DOCUMENTAL */
             Route::resource('document-types', DocumentTypeController::class);
-            Route::get('tenant/documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
-            Route::get('tenant/inbox', [DocumentInboxController::class, 'index'])->name('inbox');
+            Route::resource('document-series', DocumentSeriesController::class);
 
-            Route::post('flows/{flow}/receive', [DocumentFlowController::class, 'receive']);
-            Route::post('flows/{flow}/approve', [DocumentFlowController::class, 'approve']);
-            Route::post('flows/{flow}/reject', [DocumentFlowController::class, 'reject']);
-            Route::post('flows/{flow}/observe', [DocumentFlowController::class, 'observe']);
-            Route::post('flows/{flow}/reassign', [DocumentFlowController::class, 'reassign']);
+            
 
-            Route::get('notifications', [NotificationController::class, 'index'])->name('notifications');
-            Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
-            Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount']);
+            /* BANDEJAS */
+            Route::controller(DocumentInboxController::class)
+                ->prefix('documents')
+                ->name('documents.')
+                ->group(function () {
+                    Route::get('inbox', 'index')->name('inbox');
+                    Route::get('outbox', 'outbox')->name('outbox');
+                    Route::get('tracking', 'tracking')->name('tracking');
+                    Route::get('archived', 'archived')->name('archived');
+                    Route::get('search', 'search')->name('search');
+                });
 
-            Route::get('reports/documents/{document}', [DocumentReportController::class, 'document'])->name('reports.document');
+            /* DOCUMENTOS */
+            Route::resource('documents', DocumentController::class);
 
-            Route::get('documents/search', [DocumentSearchController::class, 'index'])->name('documents.search');
+            /* WORKFLOW */
+            Route::prefix('workflow')
+                ->name('workflow.')
+                ->controller(DocumentFlowController::class)
+                ->group(function () {
+                    Route::get('flows', 'flows')
+                        ->name('flows');
+                    Route::get('sla', 'sla')
+                        ->name('sla');
+                    Route::get('rules', 'rules')
+                        ->name('rules');
+                    /* ACCIONES */
+                    Route::post('{flow}/receive', 'receive')
+                        ->name('receive');
+                    Route::post('{flow}/approve', 'approve')
+                        ->name('approve');
+                    Route::post('{flow}/reject', 'reject')
+                        ->name('reject');
+                    Route::post('{flow}/observe', 'observe')
+                        ->name('observe');
+                    Route::post('{flow}/reassign', 'reassign')
+                        ->name('reassign');
+                });
+
+            /* NOTIFICACIONES */
+            Route::controller(NotificationController::class)
+                ->prefix('notifications')
+                ->name('notifications.')
+                ->group(function () {
+                    Route::get('/', 'index')
+                        ->name('index');
+                    Route::post('{notification}/read', 'markAsRead')
+                        ->name('read');
+                    Route::get('unread-count', 'unreadCount')
+                        ->name('unread-count');
+                });
+            /* REPORTES */
+            Route::prefix('reports')
+                ->name('reports.')
+                ->group(function () {
+                    Route::get(
+                        'documents/{document}',
+                        [DocumentReportController::class, 'document']
+                    )->name('document');
+                });
+
+            /* ANALYTICS */
+            Route::prefix('analytics')
+                ->name('analytics.')
+                ->group(function () {
+                    Route::get(
+                        'documents',
+                        [DocumentAnalyticsController::class, 'index']
+                    )->name('documents');
+                });
+            /* SIGNATURE */
+            Route::prefix('signature')
+                ->name('signature.')
+                ->controller(SignatureController::class)
+                ->group(function () {
+
+                    Route::get('/', 'index')
+                        ->name('index');
+                });
+
+            /* SLA */
+            Route::prefix('workflow')
+                ->name('workflow.')
+                ->controller(SlaController::class)
+                ->group(function () {
+
+                    Route::get('sla', 'index')
+                        ->name('sla');
+                });
+
+            /* RULES */
+            Route::prefix('workflow')
+                ->name('workflow.')
+                ->controller(WorkflowRuleController::class)
+                ->group(function () {
+
+                    Route::get('rules', 'index')
+                        ->name('rules');
+                });
+            
+
         });
 });

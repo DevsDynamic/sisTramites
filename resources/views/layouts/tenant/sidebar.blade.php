@@ -5,7 +5,7 @@
     </a>
 
     {{-- MENU --}}
-    <div class="tenant-menu">
+    <div class="tenant-menu" id="tenantSidebarMenu">
         @include('layouts.tenant.menu')
     </div>
 </aside>

@@ -35,8 +35,6 @@ class TenantController extends Controller
 
     public function store(Request $request)
     {
-        // La validación va FUERA del try-catch
-        // Si falla, Laravel redirige automáticamente con errores y withInput()
         $request->validate([
             'business_name' => 'required|string|max:255',
             'ruc'           => 'required|digits:11|unique:tenants,ruc',
@@ -83,6 +81,126 @@ class TenantController extends Controller
             return back()
                 ->withInput()
                 ->withErrors(['error' => $e->getMessage()]);
+        }
+    }
+
+    public function edit(Tenant $tenant)
+    {
+        $plans = Plan::where(
+            'is_active',
+            true
+        )->get();
+
+        return view(
+            'admin.tenants.edit',
+            compact(
+                'tenant',
+                'plans'
+            )
+        );
+    }
+
+    public function update(
+        Request $request,
+        Tenant $tenant
+    ) {
+
+        $request->validate([
+            'business_name' => 'required|string|max:255',
+
+            'ruc' => [
+                'required',
+                'digits:11',
+                'unique:tenants,ruc,' . $tenant->id
+            ],
+
+            'email' => [
+                'required',
+                'email',
+                'unique:tenants,email,' . $tenant->id
+            ],
+
+            'phone' => 'nullable|string|max:20',
+
+            'plan_id' => 'required|exists:plans,id',
+
+            'status' => 'required|in:active,suspended,expired',
+
+            'expires_at' => 'nullable|date',
+        ]);
+
+        try {
+
+            $tenant->update([
+                'business_name' => $request->business_name,
+                'trade_name'    => $request->trade_name,
+                'ruc'           => $request->ruc,
+                'email'         => $request->email,
+                'phone'         => $request->phone,
+                'plan_id'       => $request->plan_id,
+                'status'        => $request->status,
+                'expires_at'    => $request->expires_at,
+            ]);
+
+            return redirect()
+                ->route('tenants.index')
+                ->with(
+                    'success',
+                    'Cliente actualizado correctamente.'
+                );
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'No se pudo actualizar el cliente.'
+                );
+        }
+    }
+
+    public function show(Tenant $tenant)
+    {
+        $tenant->load('plan', 'domains');
+
+        return view(
+            'admin.tenants.show',
+            compact('tenant')
+        );
+    }
+
+    public function destroy(Tenant $tenant)
+    {
+        try {
+
+            /*
+        |----------------------------------
+        | ELIMINAR DOMINIOS
+        |----------------------------------
+        */
+            $tenant->domains()->delete();
+
+            /*
+        |----------------------------------
+        | ELIMINAR TENANT
+        |----------------------------------
+        */
+            $tenant->delete();
+
+            return back()->with(
+                'success',
+                'Cliente eliminado correctamente.'
+            );
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            return back()->with(
+                'error',
+                'No se pudo eliminar el cliente.'
+            );
         }
     }
 }

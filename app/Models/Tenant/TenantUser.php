@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 class TenantUser extends Authenticatable
 {
     use HasRoles, Notifiable;
-
+    // protected $connection = 'tenant';
     protected $table = 'users';
     protected $guard_name = 'tenant';
 
