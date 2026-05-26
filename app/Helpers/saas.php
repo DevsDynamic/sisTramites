@@ -122,6 +122,6 @@ function tenant_sidebar_color()
 {
     return tenant_branding(
         'sidebar_color',
-        '#111827'
+        '#ffff'
     );
 }

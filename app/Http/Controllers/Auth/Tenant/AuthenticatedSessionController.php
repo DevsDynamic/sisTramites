@@ -38,23 +38,6 @@ class AuthenticatedSessionController extends Controller
             'email' => 'Credenciales incorrectas.',
         ]);
     }
-    // public function store(Request $request)
-    // {
-    //     //dd(tenant());
-    //     $credentials = $request->validate([
-    //         'email'    => ['required', 'email'],
-    //         'password' => ['required'],
-    //     ]);
-
-    //     if (Auth::guard('tenant')->attempt($credentials)) {
-    //         $request->session()->regenerate();
-    //         return redirect()->intended('/dashboard');
-    //     }
-
-    //     return back()->withErrors([
-    //         'email' => 'Credenciales incorrectas.',
-    //     ]);
-    // }
 
     public function destroy(Request $request)
     {

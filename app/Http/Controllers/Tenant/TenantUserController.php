@@ -196,7 +196,10 @@ class TenantUserController extends Controller
             $user->syncRoles([]);
             /* REMOVE AREAS */
             $user->areas()->detach();
-            $user->delete();
+            // $user->delete();
+            $user->update([
+                'active' => false
+            ]);
 
             DB::connection('tenant')->commit();
 

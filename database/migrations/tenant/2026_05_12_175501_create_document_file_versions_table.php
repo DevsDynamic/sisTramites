@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('document_file_versions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id');
             $table->foreignId('document_id');
             $table->foreignId('uploaded_by');
             $table->integer('version');

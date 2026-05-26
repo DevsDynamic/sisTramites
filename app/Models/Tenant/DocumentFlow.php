@@ -44,19 +44,4 @@ class DocumentFlow extends Model
 
         return 'success';
     }
-
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (tenant_id()) {
-                $model->tenant_id = tenant_id();
-            }
-        });
-
-        static::addGlobalScope('tenant', function ($query) {
-            if (tenant_id()) {
-                $query->where('tenant_id', tenant_id());
-            }
-        });
-    }
 }

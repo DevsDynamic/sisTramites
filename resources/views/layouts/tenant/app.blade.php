@@ -18,8 +18,12 @@
     {{-- ICONS --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
     {{-- STYLES --}}
     @include('layouts.tenant.styles')
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
@@ -46,8 +50,19 @@
 
         </div>
     </div>
-    <x-toast />
+    {{-- <x-toast /> --}}
+    @include('components.toast')
 
+    <script>
+        window.AppData = {
+            tenantId: @json(tenant_id()),
+            userId: @json(auth()->id()),
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> --}}
     {{-- SCRIPTS --}}
     @include('layouts.tenant.scripts')
     @stack('scripts')

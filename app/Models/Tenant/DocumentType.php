@@ -7,15 +7,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentType extends Model
 {
-    use HasFactory;
-    
     protected $connection = 'tenant';
-    
+
     protected $fillable = [
         'name',
         'code',
-        'is_active',
-        'tenant_id',
+        'allow_image_signature',
+        'require_digital_signature',
+        'active',
     ];
 
     public function series()
@@ -28,19 +27,8 @@ class DocumentType extends Model
         return $this->hasMany(Document::class);
     }
 
-    // 🔐 MULTITENANT SCOPE (IMPORTANTE)
-    protected static function booted()
+    public function scopeActive($query)
     {
-        static::creating(function ($model) {
-            if (tenant_id()) {
-                $model->tenant_id = tenant_id();
-            }
-        });
-
-        static::addGlobalScope('tenant', function ($query) {
-            if (tenant_id()) {
-                $query->where('tenant_id', tenant_id());
-            }
-        });
+        return $query->where('active', true);
     }
 }

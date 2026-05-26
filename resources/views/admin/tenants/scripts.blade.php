@@ -1,19 +1,22 @@
 <script>
-    document
-        .querySelectorAll('.toggle-password')
-        .forEach(button => {
+    document.addEventListener('DOMContentLoaded', function() {
 
-            button.addEventListener(
-                'click',
-                function() {
+        document
+            .querySelectorAll('.toggle-password')
+            .forEach(toggle => {
+
+                toggle.addEventListener('click', function() {
+
+                    const group =
+                        this.closest('.input-group');
 
                     const input =
-                        document.getElementById(
-                            this.dataset.target
-                        );
+                        group.querySelector('.password-input');
 
                     const icon =
                         this.querySelector('i');
+
+                    if (!input) return;
 
                     if (input.type === 'password') {
 
@@ -30,8 +33,12 @@
                         icon.classList.remove('ti-eye-off');
 
                         icon.classList.add('ti-eye');
+
                     }
-                }
-            );
-        });
+
+                });
+
+            });
+
+    });
 </script>

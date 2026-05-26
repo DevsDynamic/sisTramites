@@ -49,8 +49,7 @@ return new class extends Migration
             | ESTADO
             |--------------------------------------------------------------------------
             */
-            $table->boolean('is_active')
-                ->default(true);
+            $table->boolean('active')->default(true);
             $table->timestamps();
         });
     }

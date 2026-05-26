@@ -55,7 +55,6 @@
                     </div>
                 </div>
             </div>
-            @include('tenant.roles.modals.edit')
         @endforeach
     </div>
 

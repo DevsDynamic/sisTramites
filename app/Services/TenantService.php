@@ -21,4 +21,9 @@ class TenantService
     {
         return self::id() !== null;
     }
+
+    function tenant_id()
+    {
+        return tenant()?->id;
+    }
 }

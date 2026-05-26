@@ -14,7 +14,7 @@ class Plan extends Model
         'max_users',
         'max_signatures',
         'max_documents',
-        'is_active',
+        'active',
     ];
 
     public function tenants()

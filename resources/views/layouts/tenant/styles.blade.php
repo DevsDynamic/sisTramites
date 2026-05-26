@@ -190,9 +190,15 @@
         min-height: 100vh;
         border-right: 1px solid rgba(255, 255, 255, .08);
         z-index: 999;
-        overflow-y: auto;
+        /* overflow-y: auto; */
+        overflow-y: scroll;
+    overflow-x: hidden;
     }
-
+.collapse.show {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
     /* BRAND */
     .tenant-sidebar-brand {
         display: flex;
@@ -318,50 +324,45 @@
 
     /* ROTATE */
     .tenant-menu-toggle[aria-expanded="true"] .ti-chevron-down {
-        transform: rotate(180deg);
+        /* transform: rotate(180deg); */
     }
 
     /* SUBMENU */
     .tenant-submenu {
         margin-top: 6px;
         margin-left: 14px;
-
         padding-left: 14px;
+        border-left: 1px solid rgba(255, 255, 255, .08);
+    }
 
-        border-left:
-            1px solid rgba(255, 255, 255, .08);
-
+    .tenant-submenu {
         display: flex;
         flex-direction: column;
         gap: 4px;
     }
 
     /* SUBMENU ITEMS */
-    .tenant-submenu .tenant-menu-item {
+    /* .tenant-menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
 
-        padding:
-            10px 12px;
+        padding: 10px 12px;
+        margin-bottom: 4px;
 
         border-radius: 12px;
-
         font-size: 14px;
-
         opacity: .92;
-    }
+    } */
 
-    /* SUBMENU ACTIVE */
-    .tenant-submenu .tenant-menu-item.active {
-
-        background:
-            rgba(255, 255, 255, .12);
-
+    /* ACTIVE */
+    .tenant-menu-item.active {
+        background: rgba(255, 255, 255, .12);
         color: white;
-
-        box-shadow: none;
     }
 
     /* BADGES */
-    .tenant-submenu .badge {
+    .badge {
         font-size: 10px;
     }
 
@@ -378,34 +379,43 @@
 
     /* ROTATE WHEN OPEN */
     .tenant-menu-item[aria-expanded="true"] .menu-arrow {
-        transform: rotate(180deg);
+        /* transform: rotate(180deg); */
     }
 
+    .tenant-menu-toggle {
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .tenant-menu-item,
+.tenant-submenu,
+.collapse {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
     /* SUBMENU */
-    .collapse .tenant-menu-item {
+    /* .collapse .tenant-menu-item {
         padding:
             10px 14px;
-
         border-radius: 12px;
-
         font-size: 14px;
-
         opacity: .92;
-    }
+    } */
 
     /* SUBMENU ACTIVE */
-    .collapse .tenant-menu-item.active {
+    /* .collapse .tenant-menu-item.active {
         background:
             color-mix(in srgb,
                 white 16%,
                 transparent);
-
         color:
             var(--tenant-sidebar-text);
-
         font-weight: 600;
-
         transform: translateX(2px);
+    } */
+
+    .collapse {
+        transition: height .35s ease !important;
     }
 
     /* ITEM */
@@ -415,12 +425,32 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        transition: all .25s ease;
+        transition:
+            background .25s ease,
+            color .25s ease,
+            transform .25s ease;
         color: var(--tenant-sidebar-text);
         text-decoration: none;
         font-weight: 500;
         position: relative;
     }
+
+    .tenant-menu-item {
+        width: 100%;
+        text-align: left;
+    }
+
+    .tenant-menu-item>span:first-of-type {
+        flex: 1;
+    }
+
+    .collapse {
+        transition: height .35s ease !important;
+    }
+
+    /* .tenant-submenu {
+        overflow: hidden;
+    } */
 
     /* ICON */
     .tenant-menu-item i {
@@ -431,15 +461,19 @@
     }
 
     /* TEXT */
-    .tenant-menu-item span {
+    /* .tenant-menu-item span {
+        flex: 1;
+    } */
+
+    .tenant-menu-item>span:first-of-type {
         flex: 1;
     }
 
     /* HOVER */
     .tenant-menu-item:hover {
-        background: color-mix(in srgb, white 12%, transparent);
+        background:
+            color-mix(in srgb, white 12%, transparent);
         color: var(--tenant-sidebar-text);
-        transform: translateX(2px);
     }
 
     /* ACTIVE */

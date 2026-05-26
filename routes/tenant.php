@@ -108,8 +108,6 @@ Route::middleware([
             Route::resource('document-types', DocumentTypeController::class);
             Route::resource('document-series', DocumentSeriesController::class);
 
-            
-
             /* BANDEJAS */
             Route::controller(DocumentInboxController::class)
                 ->prefix('documents')
@@ -123,7 +121,25 @@ Route::middleware([
                 });
 
             /* DOCUMENTOS */
-            Route::resource('documents', DocumentController::class);
+            Route::prefix('documents')
+                ->name('documents.')
+                ->controller(DocumentController::class)
+                ->group(function () {
+                    Route::get('/', 'index')
+                        ->name('index');
+                    Route::get('/create', 'create')
+                        ->name('create');
+                    Route::post('/', 'store')
+                        ->name('store');
+                    Route::get('/{document}', 'show')
+                        ->name('show');
+                    Route::delete('/{document}', 'destroy')
+                        ->name('destroy');
+                    Route::post(
+                        '/{document}/sign',
+                        'sign'
+                    )->name('sign');
+                });
 
             /* WORKFLOW */
             Route::prefix('workflow')
@@ -180,15 +196,32 @@ Route::middleware([
                         [DocumentAnalyticsController::class, 'index']
                     )->name('documents');
                 });
-            /* SIGNATURE */
-            Route::prefix('signature')
-                ->name('signature.')
+            Route::prefix('signatures')
+                ->name('signatures.')
                 ->controller(SignatureController::class)
                 ->group(function () {
 
                     Route::get('/', 'index')
                         ->name('index');
+                    Route::post('/', 'store')
+                        ->name('store');
+                    Route::put(
+                        '/{signature}',
+                        'update'
+                    )->name('update');
+                    Route::delete(
+                        '/{signature}',
+                        'destroy'
+                    )->name('destroy');
                 });
+
+            // Route::prefix('signatures')
+            //     ->name('signatures.')
+            //     ->controller(SignatureController::class)
+            //     ->group(function () {
+            //         Route::get('/', 'index')
+            //             ->name('index');
+            //     });
 
             /* SLA */
             Route::prefix('workflow')
@@ -209,7 +242,5 @@ Route::middleware([
                     Route::get('rules', 'index')
                         ->name('rules');
                 });
-            
-
         });
 });

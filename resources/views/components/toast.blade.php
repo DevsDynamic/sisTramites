@@ -1,9 +1,10 @@
-{{-- SUCCESS --}}
-@if (session('success'))
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
 
-        <div id="successToast" class="toast show border-0" role="alert">
-            <div class="toast-header bg-success text-white border-0">
+    <div id="globalToast" class="toast align-items-center border-0" role="alert">
+
+        <div class="d-flex">
+
+            {{-- <div class="toast-header bg-success tenant-text border-0">
 
                 <i class="ti ti-circle-check me-2"></i>
 
@@ -13,37 +14,15 @@
 
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
 
+            </div> --}}
+
+            <div class="toast-body" id="globalToastBody">
+
             </div>
 
-            <div class="toast-body">
-                {{ session('success') }}
-            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast">
+            </button>
 
         </div>
     </div>
-@endif
-
-{{-- ERROR --}}
-@if (session('error'))
-    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:9999;">
-
-        <div id="errorToast" class="toast show border-0" role="alert">
-            <div class="toast-header bg-danger text-white border-0">
-
-                <i class="ti ti-alert-circle me-2"></i>
-
-                <strong class="me-auto">
-                    Error
-                </strong>
-
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-
-            </div>
-
-            <div class="toast-body">
-                {{ session('error') }}
-            </div>
-
-        </div>
-    </div>
-@endif
+</div>

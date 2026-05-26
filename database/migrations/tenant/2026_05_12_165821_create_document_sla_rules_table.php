@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('document_sla_rules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id');
             $table->foreignId('document_type_id');
             $table->integer('hours_limit')->default(24); // ⏱ HORAS MÁXIMAS
             $table->integer('warning_before_hours')->default(2); // 🔥 ALERTA PREVIA

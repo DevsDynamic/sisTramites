@@ -13,16 +13,16 @@ return new class extends Migration
     {
         Schema::create('document_series', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('document_type_id');
-            $table->unsignedBigInteger('area_id')->nullable();
-            $table->string('prefix');
-            $table->integer('current_number')->default(0);
-            $table->integer('padding')->default(6);
+            $table->unsignedBigInteger('document_type_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('area_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('prefix', 20);
+            $table->unsignedBigInteger('current_number')->default(0);
+            $table->unsignedInteger('padding')->default(6);
             $table->boolean('reset_yearly')->default(true);
-            $table->unsignedBigInteger('tenant_id');
+            $table->boolean('active')->default(true);
 
             $table->timestamps();
-            $table->unique(['document_type_id', 'area_id', 'tenant_id'], 'doc_series_unique');
+            $table->unique(['document_type_id', 'area_id'], 'doc_series_unique');
         });
     }
 

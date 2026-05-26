@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 
 class AreaController extends Controller
 {
-    /* INDEX */
     public function index()
     {
         $areas = Area::query()
@@ -22,13 +21,11 @@ class AreaController extends Controller
         );
     }
 
-    /* CREATE */
     public function create()
     {
         //
     }
 
-    /* STORE */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -47,13 +44,11 @@ class AreaController extends Controller
         );
     }
 
-    /* EDIT */
     public function edit(Area $area)
     {
         //
     }
 
-    /* UPDATE */
     public function update(Request $request, $id)
     {
         $area = Area::findOrFail($id);
@@ -73,16 +68,20 @@ class AreaController extends Controller
         );
     }
 
-    /* DESTROY */
     public function destroy($id)
     {
         $area = Area::findOrFail($id);
-
-        $area->delete();
+        $area->update([
+            'active' => false
+        ]);
 
         return back()->with(
             'success',
-            'Área eliminada.'
+            'Area desactivada correctamente.'
         );
+        // return response()->json([
+        //     'success' => true,
+        //     'message' => 'Area desactivada correctamente.'
+        // ]);
     }
 }

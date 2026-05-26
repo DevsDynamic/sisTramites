@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('notifications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->index();
             $table->foreignId('user_id')->index();
             $table->string('type'); // document_received, approved, rejected, etc
             $table->text('message');

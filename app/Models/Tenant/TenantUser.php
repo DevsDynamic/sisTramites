@@ -50,4 +50,25 @@ class TenantUser extends Authenticatable
         return $this->last_seen_at
             ->gt(now()->subMinutes(5));
     }
+
+    public function signatures()
+    {
+        return $this->hasMany(
+            UserSignature::class,
+            'user_id'
+        );
+    }
+
+    public function defaultSignature()
+    {
+        return $this->hasOne(
+            UserSignature::class,
+            'user_id'
+        )->where('is_default', true);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
 }

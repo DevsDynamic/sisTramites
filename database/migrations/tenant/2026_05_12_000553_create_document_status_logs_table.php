@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('action');
             $table->text('description')->nullable();
             $table->unsignedBigInteger('user_id');
-            $table->unsignedBigInteger('tenant_id');
 
             $table->timestamps();
             $table->index(['document_id']);

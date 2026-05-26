@@ -2,15 +2,16 @@
 
 namespace App\Models\Tenant;
 
+use App\Enums\DocumentStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Document extends Model
 {
     use HasFactory;
- 
+
     protected $connection = 'tenant';
-    
+
     protected $fillable = [
         'code',
         'subject',
@@ -19,8 +20,11 @@ class Document extends Model
         'area_id',
         'created_by',
         'status',
-        'sent_at',
-        'tenant_id'
+        'sent_at'
+    ];
+
+    protected $casts = [
+        'status' => DocumentStatus::class,
     ];
 
     public function type()
@@ -28,6 +32,13 @@ class Document extends Model
         return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(
+            TenantUser::class,
+            'created_by'
+        );
+    }
     public function flows()
     {
         return $this->hasMany(DocumentFlow::class);
@@ -51,20 +62,5 @@ class Document extends Model
     public function versions()
     {
         return $this->hasMany(DocumentFileVersion::class);
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (tenant_id()) {
-                $model->tenant_id = tenant_id();
-            }
-        });
-
-        static::addGlobalScope('tenant', function ($query) {
-            if (tenant_id()) {
-                $query->where('tenant_id', tenant_id());
-            }
-        });
     }
 }

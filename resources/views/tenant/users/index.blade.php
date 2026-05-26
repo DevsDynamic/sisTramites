@@ -55,16 +55,13 @@
                         {{-- ROLES --}}
                         <div class="border rounded-3 p-3 mb-3 bg-body-tertiary">
                             <div class="d-flex align-items-center mb-2">
-                                {{-- <span class="badge bg-primary text-white me-2"> --}}
                                 <span class="badge bg-primary-lt text-primary me-2 border border-primary-subtle">
                                     <i class="ti ti-shield-lock"></i>
                                 </span>
-
                                 <span class="fw-semibold text-primary">
                                     Roles
                                 </span>
                             </div>
-
                             <div class="d-flex flex-wrap gap-2">
                                 @forelse ($user->roles as $role)
                                     <span class="badge bg-primary-lt text-primary border border-primary-subtle px-3 py-2">
@@ -82,16 +79,13 @@
                         {{-- AREAS --}}
                         <div class="border rounded-3 p-3 bg-body-tertiary">
                             <div class="d-flex align-items-center mb-2">
-                                {{-- <span class="badge bg-azure text-white me-2"> --}}
                                 <span class="badge bg-azure-lt text-azure me-2 border border-azure-subtle">
                                     <i class="ti ti-building-community"></i>
                                 </span>
-
                                 <span class="fw-semibold text-azure">
                                     Áreas
                                 </span>
                             </div>
-
                             <div class="d-flex flex-wrap gap-2">
                                 @forelse ($user->areas as $area)
                                     <span class="badge bg-azure-lt text-azure border border-azure-subtle px-3 py-2">
@@ -103,9 +97,7 @@
                                     </span>
                                 @endforelse
                             </div>
-
                         </div>
-
                     </div>
                     {{-- <div class="card-footer"> --}}
                     <div class="card-footer bg-transparent border-0 pt-0">

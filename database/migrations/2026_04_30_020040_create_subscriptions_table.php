@@ -13,18 +13,15 @@ return new class extends Migration
     {
         Schema::create('subscriptions', function (Blueprint $table) {
             $table->id();
-
             $table->uuid('tenant_id');
-
             $table->foreign('tenant_id')
                 ->references('id')
                 ->on('tenants')
                 ->cascadeOnDelete();
-
             $table->foreignId('plan_id')->constrained()->onDelete('cascade');
-
             $table->decimal('amount', 10, 2);
             $table->string('status');
+
             $table->timestamp('paid_at')->nullable();
             $table->timestamps();
         });

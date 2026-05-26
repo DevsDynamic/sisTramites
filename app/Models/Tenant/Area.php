@@ -29,4 +29,9 @@ class Area extends Model
             'user_id'
         );
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('active', true);
+    }
 }

@@ -17,27 +17,11 @@ class DocumentAttachment extends Model
         'file_path',
         'file_type',
         'size',
-        'uploaded_by',
-        'tenant_id',
+        'uploaded_by'
     ];
 
     public function document()
     {
         return $this->belongsTo(Document::class);
-    }
-
-    protected static function booted()
-    {
-        static::creating(function ($model) {
-            if (tenant_id()) {
-                $model->tenant_id = tenant_id();
-            }
-        });
-
-        static::addGlobalScope('tenant', function ($query) {
-            if (tenant_id()) {
-                $query->where('tenant_id', tenant_id());
-            }
-        });
     }
 }

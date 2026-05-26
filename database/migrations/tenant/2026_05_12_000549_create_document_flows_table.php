@@ -28,7 +28,6 @@ return new class extends Migration
             ])->default('pending');
             $table->timestamp('sent_at');
             $table->timestamp('received_at')->nullable();
-            $table->unsignedBigInteger('tenant_id');
             /* SLA */
             $table->timestamp('sla_deadline')->nullable();
             $table->boolean('sla_warning_sent')->default(false);

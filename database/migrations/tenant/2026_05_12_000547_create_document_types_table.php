@@ -15,11 +15,12 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('code')->unique();
-            $table->boolean('is_active')->default(true);
-            $table->unsignedBigInteger('tenant_id');
-            
+            $table->boolean('allow_image_signature')->default(false);
+            $table->boolean('require_digital_signature')->default(false);
+            $table->boolean('active')->default(true);
+
             $table->timestamps();
-            $table->index(['tenant_id', 'is_active']);
+            $table->index(['active']);
         });
     }
 

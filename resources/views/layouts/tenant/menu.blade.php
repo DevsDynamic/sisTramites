@@ -15,50 +15,17 @@
 </div>
 {{-- DOCUMENTOS --}}
 @can('documents.view')
-
-{{-- <div class="nav-item">
-
-    <a href="javascript:void(0)"
-        class="nav-link tenant-menu-item d-flex justify-content-between align-items-center
-        {{ request()->routeIs('tenant.documents.*') ? 'active' : '' }}"
-        data-bs-toggle="collapse"
-        data-bs-target="#documentMenu"
-        aria-expanded="{{ request()->routeIs('tenant.documents.*') ? 'true' : 'false' }}">
-
-        <div class="d-flex align-items-center gap-2">
-            <i class="ti ti-file-text"></i>
-            <span>Documentos</span>
-        </div>
-
-        <i class="ti ti-chevron-down menu-arrow"></i>
-    </a>
-
-    <div class="collapse {{ request()->routeIs('tenant.documents.*') ? 'show' : '' }}"
-        id="documentMenu"
-        data-bs-parent="#tenantSidebarMenu">
-
-        <div class="ps-4 pt-2 d-flex flex-column gap-1">
-
-            {{-- ITEMS --}}
-
-        {{-- </div>
-
-    </div>
-
-</div> --}}
-
-
     <div class="tenant-menu-dropdown">
-        <a href="#documentMenu" data-bs-toggle="collapse"
-            class="nav-link tenant-menu-item tenant-menu-toggle
-                            {{ request()->routeIs('tenant.documents.*') ? 'active' : '' }}">
+        <button type="button" data-bs-toggle="collapse" data-bs-target="#documentMenu" aria-expanded="false"
+            class="tenant-menu-item tenant-menu-toggle border-0 bg-transparent w-100">
+
             <i class="ti ti-file-text"></i>
             <span>Documentos</span>
             <i class="ti ti-chevron-down"></i>
-        </a>
-        <div class="collapse
-                            {{ request()->routeIs('tenant.documents.*') ? 'show' : '' }}"
-            id="documentMenu" data-bs-parent="#tenantSidebarMenu">
+
+        </button>
+
+        <div class="collapse {{ request()->routeIs('tenant.documents.*') ? 'show' : '' }}" id="documentMenu">
             <div class="tenant-submenu">
                 {{-- BANDEJA ENTRADA --}}
                 <a href="{{ route('tenant.documents.inbox') }}"
@@ -115,7 +82,7 @@
     </div>
 @endcan
 {{-- WORKFLOW --}}
-<div class="tenant-menu-section mt-4 mb-2 px-2">
+{{-- <div class="tenant-menu-section mt-4 mb-2 px-2">
     <small class="text-uppercase tenant-menu-label">
         Workflow
     </small>
@@ -131,7 +98,7 @@
         </a>
         <div class="collapse
                     {{ request()->routeIs('tenant.workflow.*') ? 'show' : '' }}"
-            id="workflowMenu" data-bs-parent="#tenantSidebarMenu">
+            id="workflowMenu">
             <div class="tenant-submenu">
                 <a href="{{ route('tenant.workflow.flows') }}" class="nav-link tenant-menu-item">
                     <i class="ti ti-arrows-transfer-up"></i>
@@ -148,7 +115,7 @@
             </div>
         </div>
     </div>
-@endcan
+@endcan --}}
 {{-- CONFIGURACIÓN DOCUMENTAL --}}
 <div class="tenant-menu-section mt-4 mb-2 px-2">
     <small class="text-uppercase tenant-menu-label">
@@ -175,7 +142,9 @@
 @endcan
 {{-- FIRMA --}}
 @can('signature.view')
-    <a href="{{ route('tenant.signature.index') }}" class="nav-link tenant-menu-item">
+    <a href="{{ route('tenant.signatures.index') }}"
+        class="nav-link tenant-menu-item
+                {{ request()->routeIs('tenant.signatures.*') ? 'active' : '' }}">
         <i class="ti ti-signature"></i>
         <span>Firma Digital</span>
     </a>
@@ -214,7 +183,7 @@
     </a>
 @endcan
 {{-- ANALYTICS --}}
-<div class="tenant-menu-section mt-4 mb-2 px-2">
+{{-- <div class="tenant-menu-section mt-4 mb-2 px-2">
     <small class="text-uppercase tenant-menu-label">
         Reportes
     </small>
@@ -222,9 +191,9 @@
 <a href="{{ route('tenant.analytics.documents') }}" class="nav-link tenant-menu-item">
     <i class="ti ti-chart-bar"></i>
     <span>Analytics</span>
-</a>
+</a> --}}
 {{-- COMUNICACIÓN --}}
-<div class="tenant-menu-section mt-4 mb-2 px-2">
+{{-- <div class="tenant-menu-section mt-4 mb-2 px-2">
     <small class="text-uppercase tenant-menu-label">
         Comunicación
     </small>
@@ -232,7 +201,7 @@
 <a href="{{ route('tenant.notifications.index') }}" class="nav-link tenant-menu-item">
     <i class="ti ti-bell"></i>
     <span>Notificaciones</span>
-</a>
+</a> --}}
 {{-- SISTEMA --}}
 <div class="tenant-menu-section mt-4 mb-2 px-2">
     <small class="text-uppercase tenant-menu-label">

@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('workflow_permissions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id');
             $table->foreignId('document_type_id');
             $table->foreignId('area_id');
             $table->json('allowed_actions'); // approve / reject / observe / reassign

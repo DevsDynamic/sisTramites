@@ -166,15 +166,17 @@
                         </small>
                     @endisset
                 </div>
-                <div class="mb-3">
+                {{-- <div class="mb-3">
                     <label class="form-label">
                         {{ isset($tenant) ? 'Nueva Contraseña' : 'Contraseña' }}
                     </label>
                     <div class="input-group">
                         <input type="password" id="password" name="password" class="form-control"
                             {{ isset($tenant) ? '' : 'required' }}>
-                        <button type="button" class="btn btn-outline-secondary toggle-password" data-target="password">
+                        <button type="button" class="btn btn-icon btn-outline-secondary toggle-password">
+
                             <i class="ti ti-eye"></i>
+
                         </button>
                     </div>
                     @isset($tenant)
@@ -182,7 +184,35 @@
                             Dejar vacío para mantener contraseña actual.
                         </small>
                     @endisset
-                </div>
+                </div> --}}
+                <div class="mb-3">
+
+    <label class="form-label">
+        {{ isset($tenant) ? 'Nueva Contraseña' : 'Contraseña' }}
+    </label>
+
+    <div class="input-group">
+
+        <input
+            type="password"
+            name="password"
+            class="form-control password-input"
+            autocomplete="new-password"
+            {{ isset($tenant) ? '' : 'required' }}>
+
+        <span class="input-group-text toggle-password cursor-pointer">
+            <i class="ti ti-eye"></i>
+        </span>
+
+    </div>
+
+    @isset($tenant)
+        <small class="text-secondary">
+            Dejar vacío para mantener contraseña actual.
+        </small>
+    @endisset
+
+</div>
             </div>
         </div>
     </div>

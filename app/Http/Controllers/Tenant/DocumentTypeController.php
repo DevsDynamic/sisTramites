@@ -14,7 +14,7 @@ class DocumentTypeController extends Controller
 
         if ($request->search) {
             $query->where('name', 'like', "%{$request->search}%")
-                  ->orWhere('code', 'like', "%{$request->search}%");
+                ->orWhere('code', 'like', "%{$request->search}%");
         }
 
         $types = $query->latest()->paginate(10);
@@ -24,44 +24,58 @@ class DocumentTypeController extends Controller
 
     public function create()
     {
-        return view('tenant.document-types.create');
+        //return view('tenant.document-types.create');
     }
 
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required',
-            'code' => 'required|unique:document_types,code',
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            //'code' => 'nullable|max:50|unique:document_types,code',
+            'code' => 'nullable|max:50',
         ]);
 
-        DocumentType::create([
-            'name' => $request->name,
-            'code' => $request->code,
-            'is_active' => true,
-            'tenant_id' => tenant_id(),
-        ]);
+        $validated['active'] = $request->boolean('active');
 
-        return redirect()->route('tenant.document-types.index')
-            ->with('success', 'Creado correctamente');
+        DocumentType::create($validated);
+
+        return back()->with(
+            'success',
+            'Creado correctamente.'
+        );
     }
 
     public function edit(DocumentType $documentType)
     {
-        return view('tenant.document-types.edit', compact('documentType'));
+        //
     }
 
-    public function update(Request $request, DocumentType $documentType)
+    public function update(Request $request, $id)
     {
-        $documentType->update($request->only('name', 'code', 'is_active'));
+        $type = DocumentType::findOrFail($id);
+        $validated = $request->validate([
+            'name' => 'required|max:255',
+            'code' => 'nullable|max:50',
+        ]);
 
-        return redirect()->route('tenant.document-types.index')
-            ->with('success', 'Actualizado correctamente');
+        $validated['active'] = $request->boolean('active');
+
+        $type->update($validated);
+
+        return back()->with(
+            'success',
+            'Tipo de documento actualizado.'
+        );
     }
 
-    public function destroy(DocumentType $documentType)
+    public function destroy($id)
     {
-        $documentType->delete();
+        $type = DocumentType::findOrFail($id);
+        $type->delete();
 
-        return back()->with('success', 'Eliminado');
+        return back()->with(
+            'success',
+            'Área eliminada.'
+        );
     }
 }

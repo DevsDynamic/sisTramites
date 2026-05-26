@@ -18,7 +18,6 @@ return new class extends Migration
             $table->unsignedBigInteger('to_area_id');
             $table->integer('order')->default(1);
             $table->boolean('is_required')->default(true);
-            $table->unsignedBigInteger('tenant_id');
 
             $table->timestamps();
         });

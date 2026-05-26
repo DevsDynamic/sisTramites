@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('file_type')->nullable();
             $table->integer('size')->nullable();
             $table->unsignedBigInteger('uploaded_by');
-            $table->unsignedBigInteger('tenant_id');
 
             $table->timestamps();
             $table->index(['document_id']);

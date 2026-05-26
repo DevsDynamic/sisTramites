@@ -24,7 +24,7 @@ class TenantController extends Controller
 
     public function create()
     {
-        $plans = Plan::where('is_active', true)
+        $plans = Plan::where('active', true)
             ->get();
 
         return view(
@@ -87,7 +87,7 @@ class TenantController extends Controller
     public function edit(Tenant $tenant)
     {
         $plans = Plan::where(
-            'is_active',
+            'active',
             true
         )->get();
 

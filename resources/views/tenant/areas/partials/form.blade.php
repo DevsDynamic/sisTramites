@@ -2,8 +2,7 @@
     <h3 class="modal-title" id="{{ $prefix }}_modalTitle">
         Nueva Área
     </h3>
-    <button type="button" class="btn-close" data-bs-dismiss="modal">
-    </button>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
 </div>
 
 <div class="modal-body">
@@ -25,7 +24,8 @@
                 <label class="form-label">
                     Código
                 </label>
-                <input type="text" name="code" id="{{ $prefix }}_code" class="form-control" placeholder="MP">
+                <input type="text" name="code" id="{{ $prefix }}_code" class="form-control"
+                    placeholder="MP">
             </div>
         </div>
     </div>
