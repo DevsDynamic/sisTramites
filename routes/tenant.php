@@ -135,10 +135,8 @@ Route::middleware([
                         ->name('show');
                     Route::delete('/{document}', 'destroy')
                         ->name('destroy');
-                    Route::post(
-                        '/{document}/sign',
-                        'sign'
-                    )->name('sign');
+                    Route::post('/{document}/sign', 'sign')
+                        ->name('sign');
                 });
 
             /* WORKFLOW */

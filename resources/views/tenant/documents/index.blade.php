@@ -48,7 +48,7 @@
                     </div>
 
                     <span class="badge bg-blue-lt">
-                        {{ strtoupper($document->status) }}
+                        {{-- {{ strtoupper($document->status) }} --}}
                     </span>
 
                 </div>

@@ -41,7 +41,8 @@
                 </button>
                 {{-- USER --}}
                 <div class="tenant-topbar-user">
-                    {{ auth('tenant')->user()->name ?? 'Tenant' }}
+                    {{-- {{ auth('tenant')->user()->name ?? 'Tenant' }} --}}
+                    {{ \App\Models\Tenant\TenantUser::first()->name ?? 'Tenant' }}
                 </div>
                 {{-- LOGOUT --}}
                 <form method="POST" action="{{ route('tenant.logout') }}">

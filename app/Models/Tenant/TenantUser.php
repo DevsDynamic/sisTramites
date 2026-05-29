@@ -9,7 +9,16 @@ use Illuminate\Notifications\Notifiable;
 class TenantUser extends Authenticatable
 {
     use HasRoles, Notifiable;
-    // protected $connection = 'tenant';
+    
+    public function getConnectionName()
+    {
+        if (tenant()) {
+            return 'tenant';
+        }
+
+        return parent::getConnectionName();
+    }
+    
     protected $table = 'users';
     protected $guard_name = 'tenant';
 
@@ -54,7 +63,7 @@ class TenantUser extends Authenticatable
     public function signatures()
     {
         return $this->hasMany(
-            UserSignature::class,
+            Signature::class,
             'user_id'
         );
     }
@@ -62,7 +71,7 @@ class TenantUser extends Authenticatable
     public function defaultSignature()
     {
         return $this->hasOne(
-            UserSignature::class,
+            Signature::class,
             'user_id'
         )->where('is_default', true);
     }

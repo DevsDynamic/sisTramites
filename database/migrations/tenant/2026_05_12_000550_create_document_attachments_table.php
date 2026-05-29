@@ -17,7 +17,9 @@ return new class extends Migration
             $table->string('file_name');
             $table->string('file_path');
             $table->string('file_type')->nullable();
-            $table->integer('size')->nullable();
+            $table->string('mime_type')->nullable();
+            $table->bigInteger('file_size')->nullable();
+            $table->boolean('is_signed')->default(false);
             $table->unsignedBigInteger('uploaded_by');
 
             $table->timestamps();

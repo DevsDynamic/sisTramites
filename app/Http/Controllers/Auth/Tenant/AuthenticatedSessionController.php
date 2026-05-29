@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth\Tenant;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -24,13 +25,14 @@ class AuthenticatedSessionController extends Controller
         if (tenancy()->initialized) {
             $dbName = tenant()->database()->getName();
             config(['database.connections.tenant.database' => $dbName]);
-            \DB::purge('tenant');
-            \DB::reconnect('tenant');
-            \DB::setDefaultConnection('tenant');
+            DB::purge('tenant');
+            DB::reconnect('tenant');
+            DB::setDefaultConnection('tenant');
         }
 
         if (Auth::guard('tenant')->attempt($credentials)) {
             $request->session()->regenerate();
+            
             return redirect()->intended('/dashboard');
         }
 

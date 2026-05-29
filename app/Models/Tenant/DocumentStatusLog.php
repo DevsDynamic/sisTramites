@@ -15,12 +15,16 @@ class DocumentStatusLog extends Model
         'document_id',
         'action',
         'description',
-        'user_id',
-        'tenant_id',
+        'user_id'
     ];
 
     public function document()
     {
         return $this->belongsTo(Document::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(TenantUser::class, 'user_id');
     }
 }

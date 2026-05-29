@@ -5,54 +5,46 @@ export async function ajaxFormSubmit(
     {
         modalId = null,
         reload = true,
-        callback = null
+        callback = null,
+        redirect = true,  // ← nuevo
     } = {}
 ) {
-
-    const formData =
-        new FormData(form);
+    const formData = new FormData(form);
 
     try {
-
-        const response =
-            await axios.post(
-                form.action,
-                formData,
-                {
-                    headers: {
-                        'Content-Type':
-                            'multipart/form-data'
-                    }
-                }
-            );
-
-        /* SUCCESS */
-        showToast(
-            response.data.message,
-            'success'
+        const response = await axios.post(
+            form.action,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            }
         );
 
-        /* CLOSE MODAL */
-        if (modalId) {
+        showToast(response.data.message, 'success');
 
+        if (modalId) {
             bootstrap.Modal
-                .getInstance(
-                    document.getElementById(modalId)
-                )
+                .getInstance(document.getElementById(modalId))
                 ?.hide();
         }
 
-        /* RESET */
         form.reset();
 
-        /* CALLBACK */
         if (callback) {
             callback(response.data);
         }
 
-        /* RELOAD */
-        if (reload) {
+        // ← redirect tiene prioridad sobre reload
+        if (redirect && response.data.redirect) {
+            setTimeout(() => {
+                window.location.href = response.data.redirect;
+            }, 800);
+            return;
+        }
 
+        if (reload) {
             setTimeout(() => {
                 location.reload();
             }, 500);
@@ -60,29 +52,19 @@ export async function ajaxFormSubmit(
 
     } catch (error) {
 
-        /* VALIDATION */
         if (error.response?.status === 422) {
-
             let html = '';
-
-            Object.values(
-                error.response.data.errors
-            ).forEach(messages => {
-
+            Object.values(error.response.data.errors).forEach(messages => {
                 html += messages[0] + '<br>';
             });
-
             showToast(html, 'danger');
-
             return;
         }
 
-        /* SERVER */
         showToast(
-            'Error interno del servidor.',
+            error.response?.data?.message ?? 'Error interno del servidor.',
             'danger'
         );
-
         console.error(error);
     }
 }

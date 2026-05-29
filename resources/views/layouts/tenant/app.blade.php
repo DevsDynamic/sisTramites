@@ -62,10 +62,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    {{-- <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script> --}}
-    {{-- SCRIPTS --}}
     @include('layouts.tenant.scripts')
-    @stack('scripts')
+    {{-- @stack('scripts') --}}
 </body>
 
 </html>

@@ -232,23 +232,16 @@ class SignatureController extends Controller
     */
 
         Signature::create([
-
             'user_id' => $request->user_id,
-
             'type' => $request->type,
-
             'pfx_path' => $pfxPath,
-
             'signature_image' => $imagePath,
-
             'pfx_password' => $request->pfx_password
                 ? encrypt($request->pfx_password)
                 : null,
 
             'expires_at' => $request->expires_at,
-
             'is_default' => $request->boolean('is_default'),
-
             'active' => $request->boolean('active'),
         ]);
 

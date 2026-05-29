@@ -49,9 +49,12 @@ class Document extends Model
         return $this->hasMany(DocumentAttachment::class);
     }
 
-    public function logs()
+    public function statusLogs()
     {
-        return $this->hasMany(DocumentStatusLog::class);
+        return $this->hasMany(
+            DocumentStatusLog::class,
+            'document_id'
+        )->latest();
     }
 
     public function series()
