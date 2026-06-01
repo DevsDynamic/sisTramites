@@ -17,7 +17,7 @@
         "setasign/fpdf": "^1.8",
         "setasign/fpdi": "^2.6",
         "spatie/laravel-permission": "^6.25",
-        "stancl/tenancy": "^3.10"
+        "tecnickcom/tcpdf": "^6.11"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -32,8 +32,7 @@
     },
     "autoload": {
         "files": [
-            "app/Helpers/saas.php",
-            "app/Helpers/tenant.php"
+            "app/Helpers/helpers.php"
         ],
         "psr-4": {
             "App\\": "app/",

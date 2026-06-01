@@ -7,7 +7,8 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="icon" href="{{ tenant_favicon() }}">
+    <link rel="icon" href="{{ asset('storage/' . setting()?->favicon) }}">
+    
     <title>@yield('title')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet" />
@@ -25,12 +26,12 @@
             font-family: Inter, sans-serif;
         }
 
-        .tenant-login {
+        .login {
             display: flex;
             min-height: 100vh;
         }
 
-        .tenant-login-left {
+        .login-left {
             /* flex: 1; */
             width: calc(100% - 520px);
             background-size: cover;
@@ -42,7 +43,7 @@
             background-repeat: no-repeat;
         }
 
-        .tenant-login-left::before {
+        .login-left::before {
             content: '';
             position: absolute;
             inset: 0;
@@ -53,13 +54,13 @@
                     transparent 35%);
         }
 
-        .tenant-overlay-content {
+        .overlay-content {
             text-align: center;
             color: white;
             padding: 40px;
         }
 
-        .tenant-login-logo {
+        .login-logo {
             width: 110px;
             height: 110px;
             object-fit: contain;
@@ -69,7 +70,7 @@
             padding: 15px;
         }
 
-        .tenant-login-right {
+        .login-right {
             width: 520px;
             background: white;
             display: flex;
@@ -78,18 +79,18 @@
             padding: 50px;
         }
 
-        .tenant-login-card {
+        .login-card {
             width: 100%;
             max-width: 380px;
         }
 
         @media(max-width:992px) {
 
-            .tenant-login-left {
+            .login-left {
                 display: none;
             }
 
-            .tenant-login-right {
+            .login-right {
                 width: 100%;
             }
         }
@@ -97,11 +98,9 @@
 </head>
 
 <body>
-
     @yield('content')
-
     <script src="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/js/tabler.min.js"></script>
-
+    @stack('scripts')
 </body>
 
 </html>

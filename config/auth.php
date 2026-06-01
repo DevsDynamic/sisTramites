@@ -4,59 +4,29 @@ use App\Models\User;
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Defaults
-    |--------------------------------------------------------------------------
-    */
-
+    /* Authentication Defaults */
     'defaults' => [
         'guard' => env('AUTH_GUARD', 'web'),
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Authentication Guards
-    |--------------------------------------------------------------------------
-    */
-
+    /* Authentication Guards */
     'guards' => [
         'web' => [
             'driver'   => 'session',
             'provider' => 'users',
         ],
-
-        'tenant' => [
-            'driver'   => 'session',
-            'provider' => 'tenant_users',
-        ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | User Providers
-    |--------------------------------------------------------------------------
-    */
-
+    /* User Providers */
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model'  => App\Models\User::class,
         ],
-
-        'tenant_users' => [
-            'driver' => 'eloquent',
-            'model'  => App\Models\Tenant\TenantUser::class,
-        ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Resetting Passwords
-    |--------------------------------------------------------------------------
-    */
-
+    /* Resetting Passwords */
     'passwords' => [
         'users' => [
             'provider' => 'users',
@@ -66,12 +36,7 @@ return [
         ],
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Password Confirmation Timeout
-    |--------------------------------------------------------------------------
-    */
-
+    /* Password Confirmation Timeout */
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

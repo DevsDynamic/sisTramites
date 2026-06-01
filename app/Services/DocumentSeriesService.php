@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Tenant\DocumentSeries;
+use App\Models\DocumentSeries;
 use Illuminate\Support\Facades\DB;
 
 class DocumentSeriesService
@@ -10,34 +10,43 @@ class DocumentSeriesService
     /**
      * Generar correlativo seguro
      */
-    public function generate(int $documentTypeId, ?int $areaId = null): string
-    {
-        return DB::transaction(function () use ($documentTypeId, $areaId) {
+    public function generate(
+        int $documentTypeId,
+        ?int $areaId = null
+    ): string {
 
-            // 🔒 LOCK para evitar duplicados en concurrencia
-            $series = DocumentSeries::where('document_type_id', $documentTypeId)
+        return DB::transaction(function () use (
+            $documentTypeId,
+            $areaId
+        ) {
+
+            $series = DocumentSeries::query()
+                ->where('document_type_id', $documentTypeId)
                 ->where('area_id', $areaId)
+                ->where('active', true)
                 ->lockForUpdate()
                 ->first();
 
             if (!$series) {
-                throw new \Exception("Serie no configurada para este tipo de documento");
+
+                $series = DocumentSeries::query()
+                    ->where('document_type_id', $documentTypeId)
+                    ->whereNull('area_id')
+                    ->where('active', true)
+                    ->lockForUpdate()
+                    ->first();
             }
 
-            // 🔢 incrementar contador
-            $series->current_number++;
-
-            // 📅 reset anual (si aplica)
-            if ($series->reset_yearly) {
-                $year = now()->year;
-                if (!str_contains($series->prefix, $year)) {
-                    $series->prefix = $series->prefix . '-' . $year;
-                }
+            if (!$series) {
+                throw new \Exception(
+                    'No existe una serie configurada para este tipo de documento.'
+                );
             }
 
-            $series->save();
+            $series->increment('current_number');
 
-            // 🧾 generar código final
+            $series->refresh();
+
             return $this->formatCode($series);
         });
     }

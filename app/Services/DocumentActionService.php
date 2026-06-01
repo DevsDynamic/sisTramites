@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Tenant\DocumentFlow;
-use App\Models\Tenant\DocumentStatusLog;
+use App\Models\DocumentFlow;
+use App\Models\DocumentStatusLog;
 use Illuminate\Support\Facades\DB;
 
 class DocumentActionService
@@ -210,7 +210,6 @@ class DocumentActionService
                 'sent_by' => $user->id,
                 'status' => 'pending',
                 'sent_at' => now(),
-                'tenant_id' => tenant_id(),
             ]);
 
             $this->notify(
@@ -264,7 +263,6 @@ class DocumentActionService
             'action' => $action,
             'description' => $description,
             'user_id' => $user->id,
-            'tenant_id' => tenant_id(),
         ]);
     }
 }

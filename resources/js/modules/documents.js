@@ -1,4 +1,5 @@
 import { ajaxFormSubmit } from '../core/ajax';
+console.log('document.js cargado');
 
 function initCreateForm() {
     const createForm = document.getElementById('createForm');

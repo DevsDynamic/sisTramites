@@ -36,7 +36,6 @@ class DocumentService
                 'document_type_id' => $data['document_type_id'],
                 'area_id' => $user->area_id,
                 'created_by' => $user->id,
-                'tenant_id' => tenant_id(),
                 'status' => 'sent',
                 'sent_at' => now(),
             ]);
@@ -71,7 +70,6 @@ class DocumentService
                 'action' => 'created',
                 'description' => 'Documento creado',
                 'user_id' => $user->id,
-                'tenant_id' => tenant_id(),
             ]);
 
             return $document;

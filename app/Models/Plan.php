@@ -16,9 +16,4 @@ class Plan extends Model
         'max_documents',
         'active',
     ];
-
-    public function tenants()
-    {
-        return $this->hasMany(Tenant::class);
-    }
 }

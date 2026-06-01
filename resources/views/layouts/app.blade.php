@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        @yield('title')
+    </title>
+
+    {{-- FAVICON --}}
+    <link rel="icon" href="">
+
+    {{-- TABLER --}}
+    <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
+    {{-- ICONS --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    @vite(['resources/js/app.js','resources/css/app.css'])
+    @stack('module-js')
+
+    @include('layouts.styles')
+
+</head>
+
+<body>
+    <div class="layout">
+        {{-- SIDEBAR --}}
+        @include('layouts.sidebar')
+
+        {{-- MAIN --}}
+        <div class="main">
+
+            {{-- TOPBAR --}}
+            @include('layouts.topbar')
+
+            {{-- ALERTS --}}
+            @include('layouts.alerts')
+
+            {{-- CONTENT --}}
+            <main class="content">
+                @yield('content')
+            </main>
+
+            {{-- FOOTER --}}
+            @include('layouts.footer')
+
+        </div>
+    </div>
+    @include('components.toast')
+    {{-- SCRIPTS --}}
+    @include('layouts.scripts')
+    @stack('scripts')
+</body>
+
+</html>

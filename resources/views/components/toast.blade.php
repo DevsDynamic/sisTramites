@@ -3,19 +3,6 @@
     <div id="globalToast" class="toast align-items-center border-0" role="alert">
 
         <div class="d-flex">
-
-            {{-- <div class="toast-header bg-success tenant-text border-0">
-
-                <i class="ti ti-circle-check me-2"></i>
-
-                <strong class="me-auto">
-                    Correcto
-                </strong>
-
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-
-            </div> --}}
-
             <div class="toast-body" id="globalToastBody">
 
             </div>

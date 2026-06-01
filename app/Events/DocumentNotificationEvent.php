@@ -20,7 +20,7 @@ class DocumentNotificationEvent implements ShouldBroadcast
 
     public function broadcastOn()
     {
-        return new Channel('tenant.' . tenant_id() . '.user.' . $this->userId);
+        
     }
 
     public function broadcastAs()

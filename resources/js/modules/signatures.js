@@ -1,167 +1,280 @@
-// import { ajaxFormSubmit } from '../core/ajax';
-// import { resetModal } from '../core/modal';
+import { ajaxFormSubmit } from '../core/ajax';
 
-// /*
-// |--------------------------------------------------------------------------
-// | TOGGLE TYPE
-// |--------------------------------------------------------------------------
-// */
+document.addEventListener('DOMContentLoaded', () => {
 
-// function toggleSignatureType(type)
-// {
-//     const official =
-//         document.getElementById(
-//             'officialFields'
-//         );
+    const createForm =
+        document.getElementById('createForm');
 
-//     const visual =
-//         document.getElementById(
-//             'visualFields'
-//         );
+    if (!createForm) {
+        return;
+    }
 
-//     if (!official || !visual) return;
+    console.log('Módulo Firmas cargado');
 
-//     if (type === 'official') {
+    /*
+    |--------------------------------------------------------------------------
+    | CREATE
+    |--------------------------------------------------------------------------
+    */
 
-//         official.style.display = 'flex';
+    createForm.addEventListener('submit', async (e) => {
 
-//         visual.style.display = 'none';
+        e.preventDefault();
 
-//     } else {
+        await ajaxFormSubmit(
+            createForm,
+            {
+                modalId: 'createModal',
+                reload: false,
+                redirect: false,
+                callback: refreshEntidad
+            }
+        );
+    });
 
-//         official.style.display = 'none';
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT BUTTON
+    |--------------------------------------------------------------------------
+    */
 
-//         visual.style.display = 'flex';
-//     }
-// }
+    document.addEventListener('click', (e) => {
 
-// /*
-// |--------------------------------------------------------------------------
-// | INIT
-// |--------------------------------------------------------------------------
-// */
+        const btn =
+            e.target.closest('.edit-btn');
 
-// document.addEventListener(
-//     'DOMContentLoaded',
-//     function () {
+        if (!btn) {
+            return;
+        }
 
-//         /*
-//         |--------------------------------------------------------------------------
-//         | RESET MODAL
-//         |--------------------------------------------------------------------------
-//         */
+        document.getElementById('edit_user_id').value =
+            btn.dataset.userId ?? '';
 
-//         resetModal(
-//             'createModal',
-//             'createForm'
-//         );
+        document.getElementById('edit_type').value =
+            btn.dataset.type ?? 'official';
 
-//         /*
-//         |--------------------------------------------------------------------------
-//         | TYPE CHANGE
-//         |--------------------------------------------------------------------------
-//         */
+        document.getElementById('editForm').action =
+            `/signatures/${btn.dataset.id}`;
 
-//         const typeSelect =
-//             document.getElementById(
-//                 'create_type'
-//             );
+        toggleSignatureType(
+            'edit',
+            btn.dataset.type
+        );
+    });
 
-//         if (typeSelect) {
+    /*
+    |--------------------------------------------------------------------------
+    | EDIT SUBMIT
+    |--------------------------------------------------------------------------
+    */
 
-//             toggleSignatureType(
-//                 typeSelect.value
-//             );
+    const editForm =
+        document.getElementById('editForm');
 
-//             typeSelect.addEventListener(
-//                 'change',
-//                 function () {
+    editForm?.addEventListener('submit', async (e) => {
 
-//                     toggleSignatureType(
-//                         this.value
-//                     );
-//                 }
-//             );
-//         }
+        e.preventDefault();
 
-//         /*
-//         |--------------------------------------------------------------------------
-//         | IMAGE PREVIEW
-//         |--------------------------------------------------------------------------
-//         */
+        await ajaxFormSubmit(
+            editForm,
+            {
+                modalId: 'editModal',
+                reload: false,
+                redirect: false,
+                callback: refreshEntidad
+            }
+        );
+    });
 
-//         const imageInput =
-//             document.getElementById(
-//                 'create_signature_image'
-//             );
+    /*
+    |--------------------------------------------------------------------------
+    | DELETE
+    |--------------------------------------------------------------------------
+    */
 
-//         if (imageInput) {
+    document.addEventListener('click', (e) => {
 
-//             imageInput.addEventListener(
-//                 'change',
-//                 function (e) {
+        const btn =
+            e.target.closest('.delete-btn');
 
-//                     const file =
-//                         e.target.files[0];
+        if (!btn) {
+            return;
+        }
 
-//                     if (!file) return;
+        document.getElementById('deleteForm').action =
+            `/signatures/${btn.dataset.id}`;
+    });
 
-//                     const reader =
-//                         new FileReader();
+    const deleteForm =
+        document.getElementById('deleteForm');
 
-//                     reader.onload =
-//                         function (ev) {
+    deleteForm?.addEventListener('submit', async (e) => {
 
-//                             const preview =
-//                                 document.getElementById(
-//                                     'signaturePreview'
-//                                 );
+        e.preventDefault();
 
-//                             if (!preview) return;
+        await ajaxFormSubmit(
+            deleteForm,
+            {
+                modalId: 'deleteModal',
+                reload: false,
+                redirect: false,
+                callback: refreshEntidad
+            }
+        );
+    });
 
-//                             preview.src =
-//                                 ev.target.result;
+    /*
+    |--------------------------------------------------------------------------
+    | TYPE CHANGE
+    |--------------------------------------------------------------------------
+    */
 
-//                             preview.classList.remove(
-//                                 'd-none'
-//                             );
-//                         };
+    ['create', 'edit'].forEach(prefix => {
 
-//                     reader.readAsDataURL(
-//                         file
-//                     );
-//                 }
-//             );
-//         }
+        document
+            .getElementById(`${prefix}_type`)
+            ?.addEventListener('change', function () {
 
-//         /*
-//         |--------------------------------------------------------------------------
-//         | CREATE FORM AJAX
-//         |--------------------------------------------------------------------------
-//         */
+                toggleSignatureType(
+                    prefix,
+                    this.value
+                );
+            });
 
-//         const createForm =
-//             document.getElementById(
-//                 'createForm'
-//             );
+        toggleSignatureType(
+            prefix,
+            document.getElementById(`${prefix}_type`)?.value
+        );
+    });
 
-//         if (createForm) {
+    /*
+    |--------------------------------------------------------------------------
+    | IMAGE PREVIEW
+    |--------------------------------------------------------------------------
+    */
 
-//             createForm.addEventListener(
-//                 'submit',
-//                 async function (e) {
+    ['create', 'edit'].forEach(prefix => {
 
-//                     e.preventDefault();
+        document
+            .getElementById(`${prefix}_signature_image`)
+            ?.addEventListener('change', function (e) {
 
-//                     await ajaxFormSubmit(
-//                         createForm,
-//                         {
-//                             modalId:
-//                                 'createModal'
-//                         }
-//                     );
-//                 }
-//             );
-//         }
-//     }
-// );
+                const file =
+                    e.target.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                const reader =
+                    new FileReader();
+
+                reader.onload = function (ev) {
+
+                    const preview =
+                        document.getElementById(
+                            `${prefix}_signaturePreview`
+                        );
+
+                    preview.src =
+                        ev.target.result;
+
+                    preview.classList.remove(
+                        'd-none'
+                    );
+                };
+
+                reader.readAsDataURL(file);
+            });
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESET CREATE
+    |--------------------------------------------------------------------------
+    */
+
+    document
+        .getElementById('createModal')
+        ?.addEventListener(
+            'hidden.bs.modal',
+            () => {
+
+                createForm.reset();
+
+                toggleSignatureType(
+                    'create',
+                    'official'
+                );
+
+                const preview =
+                    document.getElementById(
+                        'create_signaturePreview'
+                    );
+
+                if (preview) {
+
+                    preview.src = '';
+
+                    preview.classList.add(
+                        'd-none'
+                    );
+                }
+            }
+        );
+});
+
+/*
+|--------------------------------------------------------------------------
+| TOGGLE TYPE
+|--------------------------------------------------------------------------
+*/
+
+function toggleSignatureType(
+    prefix,
+    type
+) {
+
+    const official =
+        document.getElementById(
+            `${prefix}_officialFields`
+        );
+
+    const visual =
+        document.getElementById(
+            `${prefix}_visualFields`
+        );
+
+    if (!official || !visual) {
+        return;
+    }
+
+    if (type === 'official') {
+
+        official.style.display = '';
+
+        visual.style.display = 'none';
+
+    } else {
+
+        official.style.display = 'none';
+
+        visual.style.display = '';
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
+| REFRESH
+|--------------------------------------------------------------------------
+*/
+
+async function refreshEntidad() {
+    const response =
+        await axios.get('/signatures/cards');
+
+    document
+        .getElementById('signaturesContainer')
+        .outerHTML =
+        response.data;
+}

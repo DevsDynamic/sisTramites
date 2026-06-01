@@ -19,8 +19,9 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->boolean('active')->default(true);
-            
             $table->timestamps();
+
+            $table->timestamp('last_seen_at')->nullable();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

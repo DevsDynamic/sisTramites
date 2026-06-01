@@ -3,19 +3,14 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Services\TenantService;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
-    public function register(): void
-    {
-        $this->app->singleton('tenant', function () {
-            return new TenantService();
-        });
-    }
+    public function register(): void {}
 
     public function boot(): void
     {
-        //
+        Paginator::useBootstrapFive();
     }
 }

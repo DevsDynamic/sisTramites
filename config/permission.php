@@ -1,15 +1,13 @@
 <?php
 
 use Spatie\Permission\DefaultTeamResolver;
-// use Spatie\Permission\Models\Permission;
-// use Spatie\Permission\Models\Role;
-use App\Models\Tenant\Permission;
-use App\Models\Tenant\Role;
+use App\Models\Permission;
+use App\Models\Role;
 
 return [
 
     'defaults' => [
-        'guard' => 'tenant',
+        'guard' => 'web',
     ],
     
     'models' => [

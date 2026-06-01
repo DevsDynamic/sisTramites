@@ -23,12 +23,11 @@ class DocumentFileVersionService
         $version = $lastVersion + 1;
 
         $path = $file->store(
-            'documents/' . tenant_id(),
+            'documents/' . 
             'public'
         );
 
         return DocumentFileVersion::create([
-            'tenant_id' => tenant_id(),
             'document_id' => $document->id,
             'uploaded_by' => $user->id,
             'version' => $version,

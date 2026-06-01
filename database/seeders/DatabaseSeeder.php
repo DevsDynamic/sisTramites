@@ -16,7 +16,8 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         //Colocar seeder en orden de creación
+        $this->call(RoleSeeder::class);
         $this->call(AdminSeeder::class);
-        $this->call(PlanSeeder::class);
+        $this->call([SettingSeeder::class,]);
     }
 }

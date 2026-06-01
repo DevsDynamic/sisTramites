@@ -1,43 +1,53 @@
 export function showToast(message, type = 'success') {
+console.log('TOAST:', message, type);
 
-    const toast =
-        document.getElementById('globalToast');
+    const iconMap = {
+        success: 'ti ti-circle-check',
+        danger: 'ti ti-alert-circle',
+        warning: 'ti ti-alert-triangle',
+        info: 'ti ti-info-circle'
+    };
 
-    const body =
-        document.getElementById('globalToastBody');
+    const titleMap = {
+        success: 'Éxito',
+        danger: 'Error',
+        warning: 'Advertencia',
+        info: 'Información'
+    };
 
-    if (!toast || !body) return;
+    const toast = document.createElement('div');
 
-    toast.classList.remove(
-        'bg-success',
-        'bg-danger',
-        'text-white'
-    );
+    toast.className = `app-toast app-toast-${type}`;
 
-    if (type === 'success') {
+    toast.innerHTML = `
+        <div class="app-toast-icon">
+            <i class="${iconMap[type]}"></i>
+        </div>
 
-        toast.classList.add(
-            'bg-success',
-            'text-white'
-        );
+        <div class="app-toast-content">
+            <div class="app-toast-title">
+                ${titleMap[type]}
+            </div>
 
-    } else {
+            <div class="app-toast-message">
+                ${message}
+            </div>
+        </div>
+    `;
 
-        toast.classList.add(
-            'bg-danger',
-            'text-white'
-        );
-    }
+    document.body.appendChild(toast);
 
-    body.innerHTML = message;
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 50);
 
-    const bsToast = new bootstrap.Toast(
-        toast,
-        {
-            delay: 5000,
-            autohide: true
-        }
-    );
+    setTimeout(() => {
 
-    bsToast.show();
+        toast.classList.remove('show');
+
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+
+    }, 3500);
 }

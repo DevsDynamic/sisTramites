@@ -4,7 +4,7 @@ if (window.Echo) {
 
     window.Echo
         .channel(
-            `tenant.${window.AppData.tenantId}.user.${window.AppData.userId}`
+            `user.${window.AppData.userId}`
         )
         .listen(
             '.document.notification',

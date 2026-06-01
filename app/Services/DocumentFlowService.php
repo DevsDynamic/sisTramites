@@ -34,7 +34,6 @@ class DocumentFlowService
                 'sent_by' => $user->id,
                 'status' => 'pending',
                 'sent_at' => now(),
-                'tenant_id' => tenant_id(),
             ]);
 
             /**

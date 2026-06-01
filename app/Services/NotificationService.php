@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Events\DocumentNotificationEvent;
-use App\Models\Tenant\Notification;
+use App\Models\Notification;
 
 class NotificationService
 {
@@ -15,7 +15,6 @@ class NotificationService
     ) {
 
         $notification = Notification::create([
-            'tenant_id' => tenant_id(),
             'user_id' => $userId,
             'type' => $type,
             'message' => $message,

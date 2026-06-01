@@ -4,24 +4,18 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class UpdateLastSeen
 {
-    public function handle(
-        Request $request,
-        Closure $next
-    ) {
+    public function handle($request, Closure $next)
+    {
+        if (auth()->check()) {
 
-        if (auth('tenant')->check()) {
-
-            DB::connection('tenant')
-                ->table('users')
-                ->where('id', auth('tenant')->id())
-                ->update([
-                    'last_seen_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            auth()->user()->update([
+                'last_seen_at' => now()
+            ]);
         }
 
         return $next($request);

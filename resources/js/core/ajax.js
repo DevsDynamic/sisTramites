@@ -25,10 +25,56 @@ export async function ajaxFormSubmit(
         showToast(response.data.message, 'success');
 
         if (modalId) {
-            bootstrap.Modal
-                .getInstance(document.getElementById(modalId))
-                ?.hide();
+
+            const modalElement =
+                document.getElementById(modalId);
+
+            const modal =
+                bootstrap.Modal.getInstance(modalElement);
+
+            modal?.hide();
+
+            modalElement.addEventListener(
+                'hidden.bs.modal',
+                () => {
+
+                    document
+                        .querySelectorAll('.modal-backdrop')
+                        .forEach(el => el.remove());
+
+                    document.body.classList.remove('modal-open');
+
+                    document.body.style.removeProperty('padding-right');
+
+                },
+                { once: true }
+            );
         }
+
+        // if (modalId) {
+
+        //     const modalElement =
+        //         document.getElementById(modalId);
+
+        //     const modal =
+        //         bootstrap.Modal.getOrCreateInstance(
+        //             modalElement
+        //         );
+
+        //     modal.hide();
+
+        //     modalElement.addEventListener(
+        //         'hidden.bs.modal',
+        //         () => {
+
+        //             if (callback) {
+        //                 callback(response.data);
+        //             }
+
+        //         },
+        //         { once: true }
+        //     );
+        // }
 
         form.reset();
 
