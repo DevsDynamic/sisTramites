@@ -216,20 +216,19 @@
                         </div>
                     @endif
                 </div>
-                <div class="card-footer">
-                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
-                        data-bs-target="#cert-{{ $signature->id }}">
-                        Ver certificado completo
-                    </button>
-
-                    <div class="collapse mt-3" id="cert-{{ $signature->id }}">
-
-                        <pre class="small">
-{{ json_encode($signature->certificate_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
-    </pre>
-
+                @if ($signature->type === 'official')
+                    <div class="card-footer">
+                        <button class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse"
+                            data-bs-target="#cert-{{ $signature->id }}">
+                            Ver certificado completo
+                        </button>
+                        <div class="collapse mt-3" id="cert-{{ $signature->id }}">
+                            <pre class="small">
+                            {{ json_encode($signature->certificate_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}
+                        </pre>
+                        </div>
                     </div>
-                </div>
+                @endif
             </div>
         </div>
     @empty

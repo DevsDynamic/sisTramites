@@ -13,7 +13,7 @@ class SignatureController extends Controller
 {
     public function index()
     {
-        $signatures = Signature::with('user')
+        $signatures = Signature::active()->with('user')
             ->latest()
             ->paginate(12);
         $users = User::active()
