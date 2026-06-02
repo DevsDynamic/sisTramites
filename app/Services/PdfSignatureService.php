@@ -92,13 +92,16 @@ class PdfSignatureService
         $x = $lastSize['width'] - 60;
         $y = $lastSize['height'] - 35;
 
-        $pdf->Image(
-            $imagePath,
-            $x,
-            $y,
-            40,
-            20
-        );
+        if ($signature->signature_image) {
+
+            $pdf->Image(
+                $imagePath,
+                $x,
+                $y,
+                40,
+                20
+            );
+        }
 
         $signedName =
             'SIGNED_' .
@@ -125,10 +128,136 @@ class PdfSignatureService
      * FIRMA OFICIAL PFX
      * ==================================================
      */
+    // private function signOfficial(
+    //     DocumentAttachment $attachment,
+    //     Signature $signature
+    // ): string {
+
+    //     $pdfPath = storage_path(
+    //         'app/public/' .
+    //             $attachment->file_path
+    //     );
+
+    //     $pfxPath = storage_path(
+    //         'app/public/' .
+    //             $signature->pfx_path
+    //     );
+
+    //     $password = decrypt(
+    //         $signature->pfx_password
+    //     );
+
+    //     $certs = [];
+
+    //     if (
+    //         !openssl_pkcs12_read(
+    //             file_get_contents($pfxPath),
+    //             $certs,
+    //             $password
+    //         )
+    //     ) {
+    //         throw new \Exception(
+    //             'No se pudo leer el certificado.'
+    //         );
+    //     }
+
+    //     $certificate = $certs['cert'];
+
+    //     $privateKey = $certs['pkey'];
+
+    //     $pdf = new Fpdi();
+
+    //     $pages = $pdf->setSourceFile($pdfPath);
+
+    //     for ($page = 1; $page <= $pages; $page++) {
+
+    //         $tpl = $pdf->importPage($page);
+
+    //         $size = $pdf->getTemplateSize($tpl);
+
+    //         $pdf->AddPage(
+    //             $size['orientation'],
+    //             [
+    //                 $size['width'],
+    //                 $size['height']
+    //             ]
+    //         );
+
+    //         $pdf->useTemplate($tpl);
+    //     }
+
+    //     /**
+    //      * Firma digital
+    //      */
+    //     $pdf->setSignature(
+    //         $certificate,
+    //         $privateKey,
+    //         $password,
+    //         '',
+    //         2,
+    //         [
+    //             'Name' => data_get(
+    //                 $signature->certificate_data,
+    //                 'subject.CN'
+    //             ),
+
+    //             'Location' => 'Perú',
+
+    //             'Reason' => 'Documento firmado digitalmente',
+
+    //             'ContactInfo' => data_get(
+    //                 $signature->certificate_data,
+    //                 'subject.emailAddress'
+    //             )
+    //         ]
+    //     );
+
+    //     /**
+    //      * Apariencia visual
+    //      */
+    //     $pdf->setSignatureAppearance(
+    //         140,
+    //         240,
+    //         50,
+    //         20
+    //     );
+
+    //     $signedName =
+    //         'SIGNED_' .
+    //         now()->timestamp .
+    //         '.pdf';
+
+    //     $signedPath =
+    //         'documents/signed/' .
+    //         $signedName;
+
+    //     $pdf->Output(
+    //         storage_path(
+    //             'app/public/' .
+    //                 $signedPath
+    //         ),
+    //         'F'
+    //     );
+
+    //     return $signedPath;
+    // }
+
     private function signOfficial(
         DocumentAttachment $attachment,
         Signature $signature
     ): string {
+
+        $validTo = data_get(
+            $signature->certificate_data,
+            'validTo_time_t'
+        );
+
+        if ($validTo && $validTo < time()) {
+
+            throw new \Exception(
+                'El certificado digital está vencido.'
+            );
+        }
 
         $pdfPath = storage_path(
             'app/public/' .
@@ -153,6 +282,7 @@ class PdfSignatureService
                 $password
             )
         ) {
+
             throw new \Exception(
                 'No se pudo leer el certificado.'
             );
@@ -164,27 +294,14 @@ class PdfSignatureService
 
         $pdf = new Fpdi();
 
-        $pages = $pdf->setSourceFile($pdfPath);
-
-        for ($page = 1; $page <= $pages; $page++) {
-
-            $tpl = $pdf->importPage($page);
-
-            $size = $pdf->getTemplateSize($tpl);
-
-            $pdf->AddPage(
-                $size['orientation'],
-                [
-                    $size['width'],
-                    $size['height']
-                ]
-            );
-
-            $pdf->useTemplate($tpl);
-        }
+        $pdf->SetMargins(0, 0, 0);
+        $pdf->SetAutoPageBreak(false);
+        $pdf->setPrintHeader(false);
+        $pdf->setPrintFooter(false);
 
         /**
-         * Firma digital
+         * IMPORTANTE:
+         * configurar firma antes de generar páginas
          */
         $pdf->setSignature(
             $certificate,
@@ -209,14 +326,97 @@ class PdfSignatureService
             ]
         );
 
+        $pages = $pdf->setSourceFile(
+            $pdfPath
+        );
+
+        $lastSize = null;
+
+        for (
+            $page = 1;
+            $page <= $pages;
+            $page++
+        ) {
+
+            $tpl = $pdf->importPage($page);
+
+            $size = $pdf->getTemplateSize($tpl);
+
+            $lastSize = $size;
+
+            $pdf->AddPage(
+                $size['orientation'],
+                [
+                    $size['width'],
+                    $size['height']
+                ]
+            );
+
+            $pdf->useTemplate(
+                $tpl,
+                0,
+                0,
+                $size['width'],
+                $size['height']
+            );
+        }
+
         /**
          * Apariencia visual
          */
+
+        $pdf->setPage($pages);
+
+        $x = $lastSize['width'] - 60;
+        $y = $lastSize['height'] - 35;
+
+        if ($signature->signature_image) {
+
+            $pdf->Image(
+                storage_path(
+                    'app/public/' .
+                        $signature->signature_image
+                ),
+                $x,
+                $y,
+                40,
+                20
+            );
+        }
+
         $pdf->setSignatureAppearance(
-            140,
-            240,
-            50,
+            $x,
+            $y,
+            40,
             20
+        );
+
+        // $pdf->setPage($pages);
+
+        // $x = $lastSize['width'] - 60;
+        // $y = $lastSize['height'] - 35;
+
+        // $pdf->setSignatureAppearance(
+        //     $x,
+        //     $y,
+        //     50,
+        //     20
+        // );
+
+        $pdf->SetFont('helvetica', '', 7);
+
+        $pdf->SetXY($x, $y + 21);
+
+        $pdf->MultiCell(
+            50,
+            10,
+            "Firmado digitalmente por:\n" .
+                data_get(
+                    $signature->certificate_data,
+                    'subject.CN'
+                ),
+            0,
+            'L'
         );
 
         $signedName =

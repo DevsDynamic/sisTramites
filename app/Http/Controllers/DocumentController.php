@@ -165,9 +165,15 @@ class DocumentController extends Controller
 
         try {
 
-            $signature = Signature::findOrFail(
-                $request->signature_id
-            );
+            // $signature = Signature::findOrFail(
+            //     $request->signature_id
+            // );
+
+            $signature = Signature::query()
+                ->where('id', $request->signature_id)
+                ->where('user_id', auth()->id())
+                ->where('active', true)
+                ->firstOrFail();
 
             $attachment = $document
                 ->attachments()
