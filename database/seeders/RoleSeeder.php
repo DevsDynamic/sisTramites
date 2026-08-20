@@ -17,16 +17,19 @@ class RoleSeeder extends Seeder
         $permissions = [
 
             'dashboard.view',
+            'dashboard.view-all',
 
             'users.view',
             'users.create',
             'users.edit',
             'users.delete',
+            'users.manage-admins',
 
             'roles.view',
             'roles.create',
             'roles.edit',
             'roles.delete',
+            'roles.manage-system',
 
             'areas.view',
             'areas.create',
@@ -43,6 +46,7 @@ class RoleSeeder extends Seeder
             'documents.edit',
             'documents.delete',
             'documents.sign',
+            'documents.manage-all',
 
             'document-series.view',
             'document-series.create',
@@ -53,6 +57,7 @@ class RoleSeeder extends Seeder
             'signature.create',
             'signature.edit',
             'signature.delete',
+            'signature.manage-all',
 
             'flows.view',
             'flows.create',

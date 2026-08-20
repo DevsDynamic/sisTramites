@@ -1,0 +1,103 @@
+/* ===========================================================
+   TOPBAR
+=========================================================== */
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 998;
+
+    background: var(--topbar-bg);
+
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+
+    border-bottom: 1px solid var(--border-color);
+    box-shadow:
+
+        0 8px 25px rgba(0, 0, 0, .04);
+
+}
+
+/* ===========================================================
+   USER
+=========================================================== */
+
+.topbar-user {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* ===========================================================
+   ICON BUTTONS
+=========================================================== */
+
+.topbar .btn-icon {
+    width: 42px;
+    height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+
+    background: transparent;
+    color: var(--text-primary);
+
+    transition:
+        background .25s ease,
+        color .25s ease,
+        border-color .25s ease,
+        transform .25s ease;
+}
+
+.topbar .btn-icon:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
+.topbar .btn-icon:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.topbar .btn-icon i {
+    font-size: 20px;
+}
+
+/* ===========================================================
+   PLAN / EXPIRATION
+=========================================================== */
+
+.expiration {
+    display: inline-flex;
+    align-items: center;
+
+    padding: 8px 14px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    color: var(--primary);
+
+    background:
+        color-mix(in srgb, var(--primary) 12%, transparent);
+
+    border:
+        1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+}
+
+.topbar-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+}

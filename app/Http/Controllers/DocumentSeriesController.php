@@ -4,207 +4,180 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Area;
-use App\Models\Document;
-use App\Models\DocumentFlow;
 use App\Models\DocumentSeries;
 use App\Models\DocumentType;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class DocumentSeriesController extends Controller
 {
     public function index()
     {
-        $series = DocumentSeries::with([
-            'documentType',
-            'area'
-        ])
-            ->search(request('search'))
-            ->latest()
-            ->paginate(20);
-
-        $types = DocumentType::active()->get();
-
-        $areas = Area::active()->get();
-
-        return view(
-            'document-series.index',
-            compact('series', 'types', 'areas')
-        );
+        return view('document-series.index', [
+            'series' => $this->getItems(),
+            'types' => DocumentType::active()->get(),
+            'areas' => Area::active()->get(),
+        ]);
     }
 
     public function cards()
     {
-        $series = DocumentSeries::with([
-            'documentType',
-            'area'
-        ])
-            ->latest()
-            ->paginate(20);
-
         return view(
-            'document-series.partials.cards',
-            compact('series')
+            'document-series.partials.results',
+            [
+                'series' => $this->getItems()
+            ]
         );
     }
 
-    public function create()
+    private function getItems()
     {
-        //
+        $search = trim((string) request('search'));
+        $active = request('active', '1');
+        $typeId = request('document_type_id');
+        $areaId = request('area_id');
+
+        if (! in_array($active, ['0', '1', 'all'], true)) {
+            $active = '1';
+        }
+
+        return DocumentSeries::query()
+            ->with(['documentType', 'area'])
+
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('prefix', 'like', "%{$search}%")
+                        ->orWhereHas('documentType', function ($typeQuery) use ($search) {
+                            $typeQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('code', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('area', function ($areaQuery) use ($search) {
+                            $areaQuery->where('name', 'like', "%{$search}%");
+                        });
+
+                    if (is_numeric($search)) {
+                        $q->orWhere('current_number', (int) $search);
+                    }
+                });
+            })
+
+            ->when(
+                filled($typeId),
+                fn($query) => $query->where(
+                    'document_type_id',
+                    $typeId
+                )
+            )
+
+            ->when($areaId === 'global', fn($query) => $query->whereNull('area_id'))
+
+            ->when(
+                filled($areaId) && $areaId !== 'global',
+                fn($query) => $query->where('area_id', $areaId)
+            )
+
+            ->when(
+                $active !== 'all',
+                fn($query) => $query->where('active', $active === '1')
+            )
+
+            ->latest('id')
+            ->paginate(config('crud.pagination', 12))
+            ->withQueryString();
+    }
+
+    private function validateData(Request $request, ?DocumentSeries $series = null): array
+    {
+        return $request->validate(
+            [
+                'document_type_id' => [
+                    'required',
+                    Rule::unique('document_series')
+                        ->ignore($series?->id)
+                        ->where(
+                            fn($q) =>
+                            $q->where('area_id', $request->area_id)
+                        ),
+                ],
+
+                'area_id' => [
+                    'nullable',
+                    'exists:areas,id'
+                ],
+
+                'prefix' => [
+                    'required',
+                    'max:20'
+                ],
+
+                'current_number' => [
+                    'required',
+                    'integer',
+                    'min:0'
+                ],
+
+                'padding' => [
+                    'required',
+                    'integer',
+                    'min:1',
+                    'max:15'
+                ],
+            ],
+            [
+                'document_type_id.unique' =>
+                'Ya existe una serie para este tipo de documento en el área seleccionada.',
+            ]
+        );
     }
 
     public function store(Request $request)
     {
-        $request->merge([
-            'reset_yearly' => $request->boolean('reset_yearly'),
-            'active' => $request->boolean('active'),
-        ]);
+        $data = $this->validateData($request);
+        $data['reset_yearly'] = $request->boolean('reset_yearly');
+        $data['active'] = $request->boolean('active');
 
-        $validated = $request->validate(
-            [
-                'document_type_id' => [
-                    'required',
-                    Rule::unique('document_series')
-                        ->where(
-                            fn($q) =>
-                            $q->where('area_id', $request->area_id)
-                        ),
-                ],
-
-                'area_id' => [
-                    'nullable',
-                    'exists:areas,id'
-                ],
-
-                'prefix' => [
-                    'required',
-                    'max:20'
-                ],
-
-                'current_number' => [
-                    'required',
-                    'integer',
-                    'min:0'
-                ],
-
-                'padding' => [
-                    'required',
-                    'integer',
-                    'min:1',
-                    'max:15'
-                ],
-
-                'reset_yearly' => [
-                    'nullable',
-                    'boolean'
-                ],
-
-                'active' => [
-                    'nullable',
-                    'boolean'
-                ],
-            ],
-            [
-                'document_type_id.unique' =>
-                'Ya existe una serie para este tipo de documento en el área seleccionada.',
-            ]
-        );
-
-        DocumentSeries::create($validated);
+        $series = DocumentSeries::create($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Serie creada correctamente.'
+            'message' => 'Serie creada correctamente.',
+            'item' => $series->only(['id', 'document_type_id', 'area_id', 'prefix']),
         ]);
     }
 
-    public function edit(DocumentSeries $documentSeries)
+    public function update(Request $request, DocumentSeries $documentSeries)
     {
-        //
-    }
+        $data = $this->validateData($request, $documentSeries);
+        $data['reset_yearly'] = $request->boolean('reset_yearly');
+        $data['active'] = $request->boolean('active');
 
-    public function update(Request $request, $id)
-    {
-        $documentSeries =
-            DocumentSeries::findOrFail($id);
-
-        $request->merge([
-            'reset_yearly' => $request->boolean('reset_yearly'),
-            'active' => $request->boolean('active'),
-        ]);
-
-        $validated = $request->validate(
-            [
-                'document_type_id' => [
-                    'required',
-                    Rule::unique('document_series')
-                        ->ignore($documentSeries->id)
-                        ->where(
-                            fn($q) =>
-                            $q->where('area_id', $request->area_id)
-                        ),
-                ],
-
-                'area_id' => [
-                    'nullable',
-                    'exists:areas,id'
-                ],
-
-                'prefix' => [
-                    'required',
-                    'max:20'
-                ],
-
-                'current_number' => [
-                    'required',
-                    'integer',
-                    'min:0'
-                ],
-
-                'padding' => [
-                    'required',
-                    'integer',
-                    'min:1',
-                    'max:15'
-                ],
-
-                'reset_yearly' => [
-                    'nullable',
-                    'boolean'
-                ],
-
-                'active' => [
-                    'nullable',
-                    'boolean'
-                ],
-            ],
-            [
-                'document_type_id.unique' =>
-                'Ya existe una serie para este tipo de documento en el área seleccionada.',
-            ]
-        );
-
-        $documentSeries->update($validated);
+        $documentSeries->update($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Serie actualizada correctamente.'
+            'message' => 'Serie actualizada correctamente.',
         ]);
     }
 
-    public function destroy($id)
+    public function active(DocumentSeries $documentSeries)
     {
-        $documentSeries =
-            DocumentSeries::findOrFail($id);
-
         $documentSeries->update([
-            'active' => false
+            'active' => ! $documentSeries->active,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Serie desactivada correctamente.'
+            'message' => 'Estado actualizado correctamente.',
+        ]);
+    }
+
+    public function destroy(DocumentSeries $documentSeries)
+    {
+        $documentSeries->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro eliminado correctamente.',
         ]);
     }
 }

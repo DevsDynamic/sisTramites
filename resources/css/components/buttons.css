@@ -1,0 +1,94 @@
+/* BUTTONS */
+
+.btn {
+
+    border-radius: 14px;
+
+    transition:
+        background .2s,
+        color .2s,
+        border-color .2s,
+        transform .15s,
+        box-shadow .2s;
+
+}
+
+.btn:hover {
+
+    transform: translateY(-1px);
+
+}
+
+.btn:active {
+
+    transform: translateY(0);
+
+}
+
+.btn-icon {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: .35rem;
+
+}
+
+/* PRIMARY */
+
+.btn-primary {
+
+    background: var(--primary);
+
+    border-color: var(--primary);
+
+}
+
+.btn-primary:hover {
+
+    filter: brightness(.95);
+
+}
+
+/* SUBTLE */
+
+.btn-subtle-danger {
+
+    background: #fee2e2;
+
+    color: #dc2626;
+
+    border: 1px solid #fecaca;
+
+}
+
+.btn-subtle-danger:hover {
+
+    background: #dc2626;
+
+    color: #fff;
+
+}
+
+/* HELPERS */
+
+.text-primary {
+
+    color: var(--primary) !important;
+
+}
+
+.bg-primary {
+
+    background: var(--primary) !important;
+
+}
+
+.border-primary {
+
+    border-color: var(--primary) !important;
+
+}

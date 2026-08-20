@@ -1,4 +1,5 @@
-import { showToast } from './toast';
+import { showToast } from '../ui/toast';
+import { showLoading, restoreLoading } from '../ui/loading';
 
 export async function ajaxFormSubmit(
     form,
@@ -6,12 +7,37 @@ export async function ajaxFormSubmit(
         modalId = null,
         reload = true,
         callback = null,
-        redirect = true,  // ← nuevo
+        redirect = true,
+
+        reset = true,
+        closeModal = true,
+        success = null,
+        error = null,
+
     } = {}
 ) {
     const formData = new FormData(form);
 
     try {
+
+        const submitButton = form.querySelector('[type="submit"]');
+
+        if (submitButton) {
+
+            submitButton.disabled = true;
+
+            submitButton
+                .querySelector('.btn-content')
+                ?.classList.add('d-none');
+
+            submitButton
+                .querySelector('.btn-loading')
+                ?.classList.remove('d-none');
+
+        }
+
+        showLoading(form);
+
         const response = await axios.post(
             form.action,
             formData,
@@ -51,35 +77,10 @@ export async function ajaxFormSubmit(
             );
         }
 
-        // if (modalId) {
-
-        //     const modalElement =
-        //         document.getElementById(modalId);
-
-        //     const modal =
-        //         bootstrap.Modal.getOrCreateInstance(
-        //             modalElement
-        //         );
-
-        //     modal.hide();
-
-        //     modalElement.addEventListener(
-        //         'hidden.bs.modal',
-        //         () => {
-
-        //             if (callback) {
-        //                 callback(response.data);
-        //             }
-
-        //         },
-        //         { once: true }
-        //     );
-        // }
-
         form.reset();
 
         if (callback) {
-            callback(response.data);
+            await callback(response.data);
         }
 
         // ← redirect tiene prioridad sobre reload
@@ -98,6 +99,14 @@ export async function ajaxFormSubmit(
 
     } catch (error) {
 
+        if (error.response?.status === 413) {
+            showToast(
+                'El archivo supera el tamaño máximo permitido de 50 MB.',
+                'danger'
+            );
+            return;
+        }
+
         if (error.response?.status === 422) {
             let html = '';
             Object.values(error.response.data.errors).forEach(messages => {
@@ -112,5 +121,11 @@ export async function ajaxFormSubmit(
             'danger'
         );
         console.error(error);
+    }
+
+    finally {
+
+        restoreLoading(form);
+
     }
 }

@@ -1,0 +1,23 @@
+.content {
+
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 30px;
+
+    overflow-x: auto;
+
+}
+
+.page-title {
+
+    margin: 0;
+
+    font-size: 24px;
+
+    font-weight: 700;
+
+    color: var(--text-primary);
+
+}

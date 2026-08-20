@@ -13,19 +13,24 @@ class PdfSignatureService
 {
     public function sign(
         DocumentAttachment $attachment,
-        Signature $signature
+        Signature $signature,
+        array $options = []
     ): string {
+
+        $options = $this->normalizeOptions($options);
 
         return match ($signature->type) {
 
             'visual' => $this->signVisual(
                 $attachment,
-                $signature
+                $signature,
+                $options
             ),
 
             'official' => $this->signOfficial(
                 $attachment,
-                $signature
+                $signature,
+                $options
             ),
 
             default => throw new \Exception(
@@ -41,7 +46,8 @@ class PdfSignatureService
      */
     private function signVisual(
         DocumentAttachment $attachment,
-        Signature $signature
+        Signature $signature,
+        array $options
     ): string {
 
         $pdfPath = storage_path(
@@ -63,15 +69,11 @@ class PdfSignatureService
 
         $pages = $pdf->setSourceFile($pdfPath);
 
-        $lastSize = null;
-
         for ($page = 1; $page <= $pages; $page++) {
 
             $tpl = $pdf->importPage($page);
 
             $size = $pdf->getTemplateSize($tpl);
-
-            $lastSize = $size;
 
             $pdf->AddPage(
                 $size['orientation'],
@@ -85,22 +87,10 @@ class PdfSignatureService
                 $size['width'],
                 $size['height']
             );
-        }
 
-        $pdf->setPage($pages);
-
-        $x = $lastSize['width'] - 60;
-        $y = $lastSize['height'] - 35;
-
-        if ($signature->signature_image) {
-
-            $pdf->Image(
-                $imagePath,
-                $x,
-                $y,
-                40,
-                20
-            );
+            if ($this->mustShowAppearance($page, $pages, $options['placement'])) {
+                $this->drawVisualAppearance($pdf, $imagePath, $size, $options);
+            }
         }
 
         $signedName =
@@ -244,7 +234,8 @@ class PdfSignatureService
 
     private function signOfficial(
         DocumentAttachment $attachment,
-        Signature $signature
+        Signature $signature,
+        array $options
     ): string {
 
         $validTo = data_get(
@@ -330,7 +321,8 @@ class PdfSignatureService
             $pdfPath
         );
 
-        $lastSize = null;
+        $signaturePage = $options['placement'] === 'first' ? 1 : $pages;
+        $signatureSize = null;
 
         for (
             $page = 1;
@@ -342,7 +334,9 @@ class PdfSignatureService
 
             $size = $pdf->getTemplateSize($tpl);
 
-            $lastSize = $size;
+            if ($page === $signaturePage) {
+                $signatureSize = $size;
+            }
 
             $pdf->AddPage(
                 $size['orientation'],
@@ -359,64 +353,25 @@ class PdfSignatureService
                 $size['width'],
                 $size['height']
             );
+
+            if ($this->mustShowAppearance($page, $pages, $options['placement'])) {
+                $this->drawOfficialAppearance($pdf, $size, $signature, $options);
+            }
         }
 
         /**
          * Apariencia visual
          */
 
-        $pdf->setPage($pages);
+        $geometry = $this->appearanceGeometry($signatureSize, $options['orientation']);
 
-        $x = $lastSize['width'] - 60;
-        $y = $lastSize['height'] - 35;
-
-        if ($signature->signature_image) {
-
-            $pdf->Image(
-                storage_path(
-                    'app/public/' .
-                        $signature->signature_image
-                ),
-                $x,
-                $y,
-                40,
-                20
-            );
-        }
+        $pdf->setPage($signaturePage);
 
         $pdf->setSignatureAppearance(
-            $x,
-            $y,
-            40,
-            20
-        );
-
-        // $pdf->setPage($pages);
-
-        // $x = $lastSize['width'] - 60;
-        // $y = $lastSize['height'] - 35;
-
-        // $pdf->setSignatureAppearance(
-        //     $x,
-        //     $y,
-        //     50,
-        //     20
-        // );
-
-        $pdf->SetFont('helvetica', '', 7);
-
-        $pdf->SetXY($x, $y + 21);
-
-        $pdf->MultiCell(
-            50,
-            10,
-            "Firmado digitalmente por:\n" .
-                data_get(
-                    $signature->certificate_data,
-                    'subject.CN'
-                ),
-            0,
-            'L'
+            $geometry['x'],
+            $geometry['y'],
+            $geometry['width'],
+            $geometry['height']
         );
 
         $signedName =
@@ -437,5 +392,95 @@ class PdfSignatureService
         );
 
         return $signedPath;
+    }
+
+    private function normalizeOptions(array $options): array
+    {
+        return [
+            'appearance_type' => in_array($options['appearance_type'] ?? null, ['signature', 'approval'], true)
+                ? $options['appearance_type']
+                : 'signature',
+            'placement' => in_array($options['placement'] ?? null, ['first', 'last', 'all'], true)
+                ? $options['placement']
+                : 'last',
+            'orientation' => in_array($options['orientation'] ?? null, ['horizontal', 'vertical'], true)
+                ? $options['orientation']
+                : 'horizontal',
+        ];
+    }
+
+    private function mustShowAppearance(int $page, int $totalPages, string $placement): bool
+    {
+        return match ($placement) {
+            'first' => $page === 1,
+            'all' => true,
+            default => $page === $totalPages,
+        };
+    }
+
+    private function appearanceGeometry(array $size, string $orientation): array
+    {
+        $width = $orientation === 'vertical' ? 34 : 62;
+        $height = $orientation === 'vertical' ? 42 : 28;
+
+        return [
+            'x' => $size['width'] - $width - 8,
+            'y' => $size['height'] - $height - 8,
+            'width' => $width,
+            'height' => $height,
+        ];
+    }
+
+    private function drawVisualAppearance(Fpdi $pdf, string $imagePath, array $size, array $options): void
+    {
+        if (! is_file($imagePath)) {
+            return;
+        }
+
+        $geometry = $this->appearanceGeometry($size, $options['orientation']);
+
+        $pdf->Image(
+            $imagePath,
+            $geometry['x'] + 2,
+            $geometry['y'] + 2,
+            $geometry['width'] - 4,
+            $geometry['height'] - 4
+        );
+    }
+
+    private function drawOfficialAppearance(Fpdi $pdf, array $size, Signature $signature, array $options): void
+    {
+        $geometry = $this->appearanceGeometry($size, $options['orientation']);
+        $signerName = (string) data_get(
+            $signature->certificate_data,
+            'subject.CN',
+            'Titular del certificado'
+        );
+        $documentNumber = data_get($signature->certificate_data, 'subject.serialNumber');
+        $label = $options['appearance_type'] === 'approval'
+            ? 'VISTO BUENO DIGITAL (VB)'
+            : 'FIRMADO DIGITALMENTE';
+
+        $pdf->SetFillColor(219, 234, 254);
+        $pdf->SetDrawColor(37, 99, 235);
+        $pdf->Rect(
+            $geometry['x'],
+            $geometry['y'],
+            $geometry['width'],
+            $geometry['height'],
+            'DF'
+        );
+        $pdf->SetTextColor(30, 64, 175);
+        $pdf->SetFont('helvetica', 'B', 7);
+        $pdf->SetXY($geometry['x'] + 3, $geometry['y'] + 3);
+        $pdf->MultiCell(
+            $geometry['width'] - 6,
+            4,
+            $label . "\n" . $signerName .
+                ($documentNumber ? "\nDocumento: " . $documentNumber : ''),
+            0,
+            'L'
+        );
+        $pdf->SetTextColor(0, 0, 0);
     }
 }

@@ -1,0 +1,13 @@
+:root {
+    /* LIGHT */
+    --app-bg: #f5f7fb;
+    --card-bg: #ffffff;
+    --topbar-bg: rgba(255, 255, 255, .85);
+    --text-primary: #111827;
+    --text-secondary: #282828;
+    --border-color: #e5e7eb;
+    --hover-bg: #f3f4f6;
+    --shadow:
+        0 4px 14px rgba(0, 0, 0, .05),
+        0 1px 3px rgba(0, 0, 0, .06);
+}

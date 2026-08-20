@@ -1,0 +1,13 @@
+.footer {
+
+    padding: 25px;
+
+    text-align: center;
+
+    color: var(--text-secondary);
+
+    font-size: 13px;
+
+    opacity: .75;
+
+}

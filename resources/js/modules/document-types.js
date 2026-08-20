@@ -1,159 +1,29 @@
-import { ajaxFormSubmit } from '../core/ajax';
+import { initCrud } from '../crud';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    const createForm =
-        document.getElementById('createForm');
+    initCrud({
 
-    if (!createForm) {
-        return;
-    }
+        entity: 'document-types',
 
-    console.log('Módulo Tipos de Documento cargado');
+        createForm: 'createForm',
+        editForm: 'editForm',
+        deleteForm: 'deleteForm',
+        statusForm: 'statusForm',
+        activeForm: 'activeForm',
 
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE
-    |--------------------------------------------------------------------------
-    */
+        createModal: 'createModal',
+        editModal: 'editModal',
+        deleteModal: 'deleteModal',
+        statusModal: 'statusModal',
+        activeModal: 'activeModal',
 
-    createForm.addEventListener('submit', async (e) => {
+        resultsContainer: 'documentTypesResults',
+        resultsUrl: '/document-types/cards',
+        browserUrl: '/document-types',
+        searchInput: '[data-crud-filter]',
+        paginationContainer: 'documentTypesResults',
 
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            createForm,
-            {
-                modalId: 'createModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT BUTTON
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.edit-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('edit_name').value =
-            btn.dataset.name ?? '';
-
-        document.getElementById('edit_code').value =
-            btn.dataset.code ?? '';
-
-        document.getElementById('edit_active').checked =
-            btn.dataset.active == 1;
-
-        document.getElementById('editForm').action =
-            `/document-types/${btn.dataset.id}`;
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    const editForm =
-        document.getElementById('editForm');
-
-    editForm?.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            editForm,
-            {
-                modalId: 'editModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE BUTTON
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.delete-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('deleteForm').action =
-            `/document-types/${btn.dataset.id}`;
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    const deleteForm =
-        document.getElementById('deleteForm');
-
-    deleteForm?.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            deleteForm,
-            {
-                modalId: 'deleteModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESET CREATE
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById('createModal')
-        ?.addEventListener(
-            'hidden.bs.modal',
-            () => createForm.reset()
-        );
 });
-
-/*
-|--------------------------------------------------------------------------
-| REFRESH
-|--------------------------------------------------------------------------
-*/
-
-async function refreshEntidad()
-{
-    const response =
-        await axios.get('/document-types/cards');
-
-    document
-        .getElementById('documentTypesContainer')
-        .outerHTML =
-        response.data;
-}

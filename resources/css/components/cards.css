@@ -1,0 +1,50 @@
+/* CARD */
+
+.card {
+
+    background: var(--card-bg);
+
+    color: var(--text-primary);
+
+    border: 1px solid var(--border-color);
+
+    border-radius: 22px;
+
+    box-shadow: var(--shadow);
+
+    transition:
+        background .25s,
+        border-color .25s,
+        transform .2s,
+        box-shadow .25s;
+
+}
+
+.card:hover {
+
+    transform: translateY(-2px);
+
+}
+
+.card-header {
+
+    background: transparent;
+
+    border-bottom: 1px solid var(--border-color);
+
+}
+
+.card-footer {
+
+    background: transparent;
+
+    border-top: 1px solid var(--border-color);
+
+}
+
+.text-truncate {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

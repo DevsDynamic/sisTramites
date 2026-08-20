@@ -1,280 +1,91 @@
-import { ajaxFormSubmit } from '../core/ajax';
+import { initCrud } from '../crud';
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    const createForm =
-        document.getElementById('createForm');
-
-    if (!createForm) {
-        return;
-    }
-
-    console.log('Módulo Firmas cargado');
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE
-    |--------------------------------------------------------------------------
-    */
-
-    createForm.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            createForm,
-            {
-                modalId: 'createModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
+    initCrud({
+        entity: 'signatures',
+        createForm: 'createForm',
+        editForm: 'editForm',
+        deleteForm: 'deleteForm',
+        activeForm: 'activeForm',
+        createModal: 'createModal',
+        editModal: 'editModal',
+        deleteModal: 'deleteModal',
+        activeModal: 'activeModal',
+        resultsContainer: 'signaturesResults',
+        resultsUrl: '/signatures/cards',
+        browserUrl: '/signatures',
+        searchInput: '[data-crud-filter]',
+        paginationContainer: 'signaturesResults',
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT BUTTON
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.edit-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('edit_user_id').value =
-            btn.dataset.userId ?? '';
-
-        document.getElementById('edit_type').value =
-            btn.dataset.type ?? 'official';
-
-        document.getElementById('editForm').action =
-            `/signatures/${btn.dataset.id}`;
-
-        toggleSignatureType(
-            'edit',
-            btn.dataset.type
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    const editForm =
-        document.getElementById('editForm');
-
-    editForm?.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            editForm,
-            {
-                modalId: 'editModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.delete-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('deleteForm').action =
-            `/signatures/${btn.dataset.id}`;
-    });
-
-    const deleteForm =
-        document.getElementById('deleteForm');
-
-    deleteForm?.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            deleteForm,
-            {
-                modalId: 'deleteModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | TYPE CHANGE
-    |--------------------------------------------------------------------------
-    */
-
-    ['create', 'edit'].forEach(prefix => {
-
-        document
-            .getElementById(`${prefix}_type`)
-            ?.addEventListener('change', function () {
-
-                toggleSignatureType(
-                    prefix,
-                    this.value
-                );
-            });
-
-        toggleSignatureType(
-            prefix,
-            document.getElementById(`${prefix}_type`)?.value
-        );
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | IMAGE PREVIEW
-    |--------------------------------------------------------------------------
-    */
-
-    ['create', 'edit'].forEach(prefix => {
-
-        document
-            .getElementById(`${prefix}_signature_image`)
-            ?.addEventListener('change', function (e) {
-
-                const file =
-                    e.target.files[0];
-
-                if (!file) {
-                    return;
-                }
-
-                const reader =
-                    new FileReader();
-
-                reader.onload = function (ev) {
-
-                    const preview =
-                        document.getElementById(
-                            `${prefix}_signaturePreview`
-                        );
-
-                    preview.src =
-                        ev.target.result;
-
-                    preview.classList.remove(
-                        'd-none'
-                    );
-                };
-
-                reader.readAsDataURL(file);
-            });
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESET CREATE
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById('createModal')
-        ?.addEventListener(
-            'hidden.bs.modal',
-            () => {
-
-                createForm.reset();
-
-                toggleSignatureType(
-                    'create',
-                    'official'
-                );
-
-                const preview =
-                    document.getElementById(
-                        'create_signaturePreview'
-                    );
-
-                if (preview) {
-
-                    preview.src = '';
-
-                    preview.classList.add(
-                        'd-none'
-                    );
-                }
-            }
-        );
+    ['create', 'edit'].forEach(initSignatureForm);
 });
 
-/*
-|--------------------------------------------------------------------------
-| TOGGLE TYPE
-|--------------------------------------------------------------------------
-*/
+function initSignatureForm(prefix) {
+    const modal = document.getElementById(`${prefix}Modal`);
+    const type = document.getElementById(`${prefix}_type`);
+    const officialFields = document.getElementById(`${prefix}_officialFields`);
+    const visualFields = document.getElementById(`${prefix}_visualFields`);
+    const pfxFile = document.getElementById(`${prefix}_pfx_file`);
+    const pfxPassword = document.getElementById(`${prefix}_pfx_password`);
+    const image = document.getElementById(`${prefix}_signature_image`);
+    const preview = document.getElementById(`${prefix}_signaturePreview`);
+    let existingImageUrl = '';
 
-function toggleSignatureType(
-    prefix,
-    type
-) {
-
-    const official =
-        document.getElementById(
-            `${prefix}_officialFields`
-        );
-
-    const visual =
-        document.getElementById(
-            `${prefix}_visualFields`
-        );
-
-    if (!official || !visual) {
+    if (!type || !officialFields || !visualFields || !pfxFile || !pfxPassword || !image || !preview) {
         return;
     }
 
-    if (type === 'official') {
+    const toggleType = () => {
+        const isOfficial = type.value === 'official';
 
-        official.style.display = '';
+        officialFields.classList.toggle('d-none', !isOfficial);
+        visualFields.classList.toggle('d-none', isOfficial);
+        pfxFile.required = prefix === 'create' && isOfficial;
+        image.required = prefix === 'create' && !isOfficial;
+        pfxFile.disabled = !isOfficial;
+        pfxPassword.disabled = !isOfficial;
+        image.disabled = isOfficial;
 
-        visual.style.display = 'none';
+        if (isOfficial) {
+            image.value = '';
+            preview.src = '';
+            preview.classList.add('d-none');
+        } else if (!image.files.length && existingImageUrl) {
+            preview.src = existingImageUrl;
+            preview.classList.remove('d-none');
+        }
+    };
 
-    } else {
+    type.addEventListener('change', toggleType);
 
-        official.style.display = 'none';
+    image.addEventListener('change', () => {
+        const file = image.files[0];
 
-        visual.style.display = '';
-    }
-}
+        if (!file) {
+            preview.src = '';
+            preview.classList.add('d-none');
+            return;
+        }
 
-/*
-|--------------------------------------------------------------------------
-| REFRESH
-|--------------------------------------------------------------------------
-*/
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove('d-none');
+    });
 
-async function refreshEntidad() {
-    const response =
-        await axios.get('/signatures/cards');
+    modal?.addEventListener('show.bs.modal', event => {
+        existingImageUrl = prefix === 'edit'
+            ? event.relatedTarget?.dataset.signature_image_url ?? ''
+            : '';
 
-    document
-        .getElementById('signaturesContainer')
-        .outerHTML =
-        response.data;
+        toggleType();
+    });
+
+    modal?.addEventListener('hidden.bs.modal', () => {
+        existingImageUrl = '';
+        preview.src = '';
+        preview.classList.add('d-none');
+        toggleType();
+    });
+
+    toggleType();
 }

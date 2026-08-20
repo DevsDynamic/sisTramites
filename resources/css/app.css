@@ -1,4 +1,28 @@
-@import './styles.css';
-/* @tailwind base;
-@tailwind components;
-@tailwind utilities; */
+/* THEME */
+@import './theme/variables.css';
+@import './theme/light.css';
+@import './theme/dark.css';
+
+/* LAYOUT */
+@import './layout/layout.css';
+@import './layout/sidebar.css';
+@import './layout/topbar.css';
+@import './layout/content.css';
+@import './layout/footer.css';
+
+/* COMPONENTS */
+@import './components/buttons.css';
+@import './components/cards.css';
+@import './components/forms.css';
+@import './components/modal.css';
+@import './components/badges.css';
+@import './components/tables.css';
+@import './components/toast.css';
+@import './components/empty.css';
+@import './components/crud.css';
+@import './components/settings.css';
+@import './components/dashboard.css';
+
+/* UTILITIES */
+@import './utilities/animations.css';
+@import './utilities/helpers.css';

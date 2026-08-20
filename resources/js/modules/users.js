@@ -1,376 +1,95 @@
-import { ajaxFormSubmit } from '../core/ajax';
+import { initCrud } from '../crud';
 
 document.addEventListener('DOMContentLoaded', () => {
-
-    const createForm =
-        document.getElementById('createForm');
-
-    if (!createForm) {
-        return;
-    }
-
-    console.log('Módulo Usuarios cargado');
-
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE
-    |--------------------------------------------------------------------------
-    */
-
-    createForm.addEventListener('submit', async (e) => {
-
-        e.preventDefault();
-
-        await ajaxFormSubmit(
-            createForm,
-            {
-                modalId: 'createModal',
-                reload: false,
-                redirect: false,
-                callback: refreshEntidad
-            }
-        );
+    initCrud({
+        entity: 'users',
+        createForm: 'createForm',
+        editForm: 'editForm',
+        deleteForm: 'deleteForm',
+        activeForm: 'activeForm',
+        createModal: 'createModal',
+        editModal: 'editModal',
+        deleteModal: 'deleteModal',
+        activeModal: 'activeModal',
+        resultsContainer: 'usersResults',
+        resultsUrl: '/users/cards',
+        browserUrl: '/users',
+        searchInput: '[data-crud-filter]',
+        paginationContainer: 'usersResults',
     });
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT BUTTON
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.edit-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('editForm').action =
-            `/users/${btn.dataset.id}`;
-
-        document.getElementById('edit_name').value =
-            btn.dataset.name ?? '';
-
-        document.getElementById('edit_email').value =
-            btn.dataset.email ?? '';
-
-        document.getElementById('edit_password').value =
-            '';
-
-        /*
-        |--------------------------------------------------------------------------
-        | RESET CHECKBOXES
-        |--------------------------------------------------------------------------
-        */
-
-        document
-            .querySelectorAll(
-                '#editForm input[type="checkbox"]'
-            )
-            .forEach(el => {
-
-                el.checked = false;
-
-                el.closest('.card')
-                    ?.classList.remove(
-                        'selected-card'
-                    );
-            });
-
-        /*
-        |--------------------------------------------------------------------------
-        | ROLES
-        |--------------------------------------------------------------------------
-        */
-
-        const roles =
-            JSON.parse(
-                btn.dataset.roles ?? '[]'
-            );
-
-        roles.forEach(role => {
-
-            const checkbox =
-                document.querySelector(
-                    `#editForm input[name="roles[]"][value="${role}"]`
-                );
-
-            if (!checkbox) {
-                return;
-            }
-
-            checkbox.checked = true;
-
-            checkbox.closest('.card')
-                ?.classList.add(
-                    'selected-card'
-                );
-        });
-
-        /*
-        |--------------------------------------------------------------------------
-        | AREAS
-        |--------------------------------------------------------------------------
-        */
-
-        const areas =
-            JSON.parse(
-                btn.dataset.areas ?? '[]'
-            );
-
-        areas.forEach(area => {
-
-            const checkbox =
-                document.querySelector(
-                    `#editForm input[name="areas[]"][value="${area}"]`
-                );
-
-            if (!checkbox) {
-                return;
-            }
-
-            checkbox.checked = true;
-
-            checkbox.closest('.card')
-                ?.classList.add(
-                    'selected-card'
-                );
-        });
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    const editForm =
-        document.getElementById('editForm');
-
-    editForm?.addEventListener(
-        'submit',
-        async (e) => {
-
-            e.preventDefault();
-
-            await ajaxFormSubmit(
-                editForm,
-                {
-                    modalId: 'editModal',
-                    reload: false,
-                    redirect: false,
-                    callback: refreshEntidad
-                }
-            );
-        }
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE BUTTON
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.delete-btn');
-
-        if (!btn) {
-            return;
-        }
-
-        document.getElementById('deleteForm').action =
-            `/users/${btn.dataset.id}`;
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | DELETE SUBMIT
-    |--------------------------------------------------------------------------
-    */
-
-    const deleteForm =
-        document.getElementById('deleteForm');
-
-    deleteForm?.addEventListener(
-        'submit',
-        async (e) => {
-
-            e.preventDefault();
-
-            await ajaxFormSubmit(
-                deleteForm,
-                {
-                    modalId: 'deleteModal',
-                    reload: false,
-                    redirect: false,
-                    callback: refreshEntidad
-                }
-            );
-        }
-    );
-
-    /*
-    |--------------------------------------------------------------------------
-    | TOGGLE PASSWORD
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('click', (e) => {
-
-        const btn =
-            e.target.closest('.toggle-password');
-
-        if (!btn) {
-            return;
-        }
-
-        const target =
-            document.getElementById(
-                btn.dataset.target
-            );
-
-        if (!target) {
-            return;
-        }
-
-        const icon =
-            btn.querySelector('i');
-
-        if (target.type === 'password') {
-
-            target.type = 'text';
-
-            icon?.classList.remove('ti-eye');
-            icon?.classList.add('ti-eye-off');
-
-        } else {
-
-            target.type = 'password';
-
-            icon?.classList.remove('ti-eye-off');
-            icon?.classList.add('ti-eye');
-        }
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | SELECT ALL
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('change', (e) => {
-
-        const selectAll =
-            e.target.closest('.select-all');
-
-        if (!selectAll) {
-            return;
-        }
-
-        const target =
-            selectAll.dataset.target;
-
-        document
-            .querySelectorAll(
-                `.${target}-checkbox`
-            )
-            .forEach(checkbox => {
-
-                checkbox.checked =
-                    selectAll.checked;
-
-                toggleCard(checkbox);
-            });
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | INDIVIDUAL CHECKBOXES
-    |--------------------------------------------------------------------------
-    */
-
-    document.addEventListener('change', (e) => {
-
-        if (
-            !e.target.matches(
-                '.roles-checkbox, .areas-checkbox'
-            )
-        ) {
-            return;
-        }
-
-        toggleCard(e.target);
-    });
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESET CREATE
-    |--------------------------------------------------------------------------
-    */
-
-    document
-        .getElementById('createModal')
-        ?.addEventListener(
-            'hidden.bs.modal',
-            () => {
-
-                createForm.reset();
-
-                createForm
-                    .querySelectorAll(
-                        'input[type="checkbox"]'
-                    )
-                    .forEach(el => {
-
-                        el.checked = false;
-
-                        el.closest('.card')
-                            ?.classList.remove(
-                                'selected-card'
-                            );
-                    });
-            }
-        );
+    ['create', 'edit'].forEach(initUserForm);
 });
 
-/*
-|--------------------------------------------------------------------------
-| CARD STYLE
-|--------------------------------------------------------------------------
-*/
+function initUserForm(prefix) {
+    const modal = document.getElementById(`${prefix}Modal`);
+    const form = document.getElementById(`${prefix}Form`);
 
-function toggleCard(checkbox)
-{
-    const card =
-        checkbox.closest('.card');
+    if (!modal || !form) return;
 
-    if (!card) {
-        return;
-    }
+    const setCardState = checkbox => {
+        checkbox.closest('.selectable-card')
+            ?.classList.toggle('border-primary', checkbox.checked);
+    };
 
-    card.classList.toggle(
-        'selected-card',
-        checkbox.checked
-    );
-}
+    const syncSelectAll = target => {
+        const checkboxes = form.querySelectorAll(`.${target}-checkbox`);
+        const selectAll = form.querySelector(`.select-all[data-target="${target}"]`);
 
-/*
-|--------------------------------------------------------------------------
-| REFRESH
-|--------------------------------------------------------------------------
-*/
+        if (selectAll) {
+            selectAll.checked = checkboxes.length > 0
+                && [...checkboxes].every(checkbox => checkbox.checked);
+        }
+    };
 
-async function refreshEntidad()
-{
-    const response =
-        await axios.get('/users/cards');
+    const selectValues = (target, values) => {
+        const selected = new Set(values.map(String));
 
-    document
-        .getElementById('usersContainer')
-        .outerHTML =
-        response.data;
+        form.querySelectorAll(`.${target}-checkbox`).forEach(checkbox => {
+            checkbox.checked = selected.has(checkbox.value);
+            setCardState(checkbox);
+        });
+
+        syncSelectAll(target);
+    };
+
+    modal.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+
+        if (prefix === 'edit' && button) {
+            selectValues('roles', JSON.parse(button.dataset.roles ?? '[]'));
+            selectValues('areas', JSON.parse(button.dataset.areas ?? '[]'));
+        }
+    });
+
+    form.addEventListener('change', event => {
+        if (event.target.matches('.roles-checkbox, .areas-checkbox')) {
+            setCardState(event.target);
+            syncSelectAll(event.target.classList.contains('roles-checkbox') ? 'roles' : 'areas');
+        }
+
+        if (event.target.matches('.select-all')) {
+            const target = event.target.dataset.target;
+
+            form.querySelectorAll(`.${target}-checkbox`).forEach(checkbox => {
+                checkbox.checked = event.target.checked;
+                setCardState(checkbox);
+            });
+        }
+    });
+
+    form.addEventListener('click', event => {
+        const button = event.target.closest('.toggle-password');
+
+        if (!button) return;
+
+        const input = document.getElementById(button.dataset.target);
+        const icon = button.querySelector('i');
+
+        if (!input) return;
+
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon?.classList.toggle('ti-eye', input.type === 'password');
+        icon?.classList.toggle('ti-eye-off', input.type === 'text');
+    });
 }

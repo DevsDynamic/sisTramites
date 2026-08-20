@@ -48,6 +48,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_seen_at' => 'datetime',
+            'is_system_owner' => 'boolean',
         ];
     }
 
@@ -72,20 +73,70 @@ class User extends Authenticatable
     }
 
     public function signatures()
-{
-    return $this->hasMany(Signature::class);
-}
+    {
+        return $this->hasMany(Signature::class);
+    }
+
+    public function documentsCreated()
+    {
+        return $this->hasMany(Document::class, 'created_by');
+    }
+
+    public function statusLogs()
+    {
+        return $this->hasMany(DocumentStatusLog::class, 'user_id');
+    }
+
+    public function uploadedAttachments()
+    {
+        return $this->hasMany(DocumentAttachment::class, 'uploaded_by');
+    }
+
+    public function fileVersions()
+    {
+        return $this->hasMany(DocumentFileVersion::class, 'uploaded_by');
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 
     public function defaultSignature()
     {
-        return $this->hasOne(
-            Signature::class,
-            'user_id'
-        )->where('is_default', true);
+        return $this->hasOne(Signature::class)
+            ->where('is_default', true)
+            ->where('active', true);
     }
 
     public function scopeActive($query)
     {
         return $query->where('active', true);
+    }
+
+    public function isSystemOwner(): bool
+    {
+        return $this->is_system_owner;
+    }
+
+    public function canDelete(): bool
+    {
+        return ! $this->isSystemOwner()
+            && ! $this->documentsCreated()->exists()
+            && ! $this->statusLogs()->exists()
+            && ! $this->uploadedAttachments()->exists()
+            && ! $this->fileVersions()->exists()
+            && ! $this->notifications()->exists()
+            && ! $this->signatures()->exists();
+    }
+
+    public function canDeactivate(): bool
+    {
+        return $this->active && ! $this->isSystemOwner();
+    }
+
+    public function canActivate(): bool
+    {
+        return ! $this->active;
     }
 }

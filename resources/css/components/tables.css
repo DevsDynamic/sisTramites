@@ -1,0 +1,21 @@
+/* TABLE */
+
+.table {
+
+    color: var(--text-primary);
+
+}
+
+.table thead th {
+
+    border-bottom: 1px solid var(--border-color);
+
+    font-weight: 700;
+
+}
+
+.table td {
+
+    vertical-align: middle;
+
+}

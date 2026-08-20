@@ -1,7 +1,6 @@
-export function reloadTable(tableId) {
-
+export function reloadDataTable(selector) {
     const table =
-        $(tableId).DataTable();
+        $(selector).DataTable();
 
     table.ajax.reload(null, false);
 }

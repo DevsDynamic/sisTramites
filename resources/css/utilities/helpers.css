@@ -1,0 +1,21 @@
+/* ==========================================
+   HELPERS
+========================================== */
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.w-fit {
+    width: fit-content;
+}
+
+.selected-card {
+    border: 2px solid var(--primary);
+    background:
+        rgba(var(--primary-rgb), .05);
+}

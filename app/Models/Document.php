@@ -15,6 +15,7 @@ class Document extends Model
         'subject',
         'content',
         'document_type_id',
+        'document_series_id',
         'area_id',
         'created_by',
         'status',
@@ -28,6 +29,11 @@ class Document extends Model
     public function type()
     {
         return $this->belongsTo(DocumentType::class, 'document_type_id');
+    }
+
+    public function area()
+    {
+        return $this->belongsTo(Area::class);
     }
 
     public function creator()
@@ -57,11 +63,28 @@ class Document extends Model
 
     public function series()
     {
-        return $this->belongsTo(DocumentSeries::class, 'document_type_id', 'document_type_id');
+        return $this->belongsTo(DocumentSeries::class);
     }
 
     public function versions()
     {
         return $this->hasMany(DocumentFileVersion::class);
+    }
+
+    public function signatureRequests()
+    {
+        return $this->hasMany(DocumentSignatureRequest::class)->orderBy('sequence');
+    }
+
+    public function canEdit(): bool
+    {
+        return $this->status === DocumentStatus::DRAFT
+            && ! $this->flows()->exists()
+            && ! $this->attachments()->where('is_signed', true)->exists();
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->canEdit();
     }
 }

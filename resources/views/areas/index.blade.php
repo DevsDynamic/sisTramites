@@ -1,32 +1,46 @@
 @extends('layouts.app')
+
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="page-title mb-1">
-                Áreas
-            </h1>
-            <div class="text-secondary">
-                Gestión organizacional
-            </div>
+    <x-crud.index>
+        <x-slot:header>
+            <x-crud.header title="Áreas" description="Administra la estructura organizacional">
+                <x-slot:toolbar>
+                    <x-crud.button-action permission="areas.create" color="success" icon="ti ti-plus" text="Nueva área" modal="createModal" />
+                </x-slot:toolbar>
+            </x-crud.header>
+        </x-slot:header>
+
+        <x-slot:filters>
+            <x-crud.filters>
+                <div class="col-md-8">
+                    <x-crud.search placeholder="Buscar por nombre, código o descripción..." />
+                </div>
+
+                <div class="col-md-4">
+                    <select name="active" class="form-select" data-crud-filter>
+                        <option value="1" @selected(request('active', '1') === '1')>Activas</option>
+                        <option value="0" @selected(request('active') === '0')>Inactivas</option>
+                        <option value="all" @selected(request('active') === 'all')>Todas</option>
+                    </select>
+                </div>
+            </x-crud.filters>
+        </x-slot:filters>
+
+        <div id="areasResults">
+            @include('areas.partials.results')
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="ti ti-plus"></i>
-            Nueva Área
-        </button>
-    </div>
+    </x-crud.index>
 
-    @include('areas.partials.cards')
+    <x-crud.modal-create :action="route('areas.store')">
+        @include('areas.partials.form', ['prefix' => 'create'])
+    </x-crud.modal-create>
 
-    <div class="mt-4">
-        {{ $areas->links() }}
-    </div>
+    <x-crud.modal-edit>
+        @include('areas.partials.form', ['prefix' => 'edit'])
+    </x-crud.modal-edit>
 
-    {{-- MODALS --}}
-    @include('areas.modals.create')
-    @include('areas.modals.edit')
-    @include('areas.modals.delete')
+    <x-crud.modal-active />
+    <x-crud.modal-delete entity="Área" />
 @endsection
 
-@push('module-js')
-    @vite('resources/js/modules/areas.js')
-@endpush
+@section('module', 'resources/js/modules/areas.js')

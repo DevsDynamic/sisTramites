@@ -2,134 +2,154 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\Area;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AreaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $areas = Area::query()
-            ->latest()
-            ->paginate(12);
+        $this->ensurePermission($request, 'areas.view');
 
-        return view(
-            'areas.index',
-            compact('areas')
-        );
+        return view('areas.index', [
+            'areas' => $this->getItems($request),
+        ]);
     }
 
-    public function cards()
+    public function cards(Request $request)
     {
-        $areas = Area::latest()->paginate(12);
+        $this->ensurePermission($request, 'areas.view');
 
-        return view(
-            'areas.partials.cards',
-            compact('areas')
-        );
-    }
-
-    public function create()
-    {
-        //
+        return view('areas.partials.results', [
+            'areas' => $this->getItems($request),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate(
-            [
-                'name' => 'required|max:255|unique:areas,name',
-                'code' => 'nullable|max:50|unique:areas,code',
-                'description' => 'nullable|max:1000',
-            ],
-            [
-                'name.required' => 'Debe ingresar el nombre del área.',
-                'name.unique'   => 'Ya existe un área con ese nombre.',
-                'code.unique'   => 'El código ingresado ya está siendo utilizado por otra área.',
-            ]
-        );
+        $this->ensurePermission($request, 'areas.create');
 
-        $validated['active'] = $request->boolean('active');
+        $data = $this->validateData($request);
+        $data['active'] = $request->boolean('active');
+        $data['code'] ??= $this->generateCode();
 
-        /* CÓDIGO AUTOMÁTICO */
-        if (empty($validated['code'])) {
+        $area = Area::create($data);
 
-            $nextNumber = Area::max('id') + 1;
+        return response()->json([
+            'success' => true,
+            'message' => 'Área creada correctamente.',
+            'item' => $area->only(['id', 'name', 'code']),
+        ]);
+    }
 
-            $validated['code'] = sprintf(
-                'AREA-%04d',
-                $nextNumber
-            );
+    public function update(Request $request, Area $area)
+    {
+        $this->ensurePermission($request, 'areas.edit');
+
+        $data = $this->validateData($request, $area);
+        $data['active'] = $request->boolean('active');
+        $data['code'] ??= $this->generateCode($area);
+
+        $area->update($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Área actualizada correctamente.',
+        ]);
+    }
+
+    public function active(Request $request, Area $area)
+    {
+        $this->ensurePermission($request, 'areas.edit');
+
+        $area->update(['active' => ! $area->active]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Estado del área actualizado correctamente.',
+        ]);
+    }
+
+    public function destroy(Request $request, Area $area)
+    {
+        $this->ensurePermission($request, 'areas.delete');
+
+        if (! $area->canDelete()) {
+            return response()->json([
+                'message' => 'No se puede eliminar un área con registros relacionados.',
+            ], 422);
         }
 
-        Area::create($validated);
+        $area->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Área creada correctamente.'
+            'message' => 'Área eliminada correctamente.',
         ]);
     }
 
-    public function edit(Area $area)
+    private function getItems(Request $request)
     {
-        //
-    }
+        $search = trim((string) $request->input('search'));
+        $active = $request->input('active', '1');
 
-    public function update(Request $request, $id) {
-
-        $area = Area::findOrFail($id);
-
-        $validated = $request->validate(
-            [
-                'name' => 'required|max:255|unique:areas,name,' . $area->id,
-                'code' => 'nullable|max:50|unique:areas,code,' . $area->id,
-                'description' => 'nullable|max:1000',
-            ],
-            [
-                'name.required' => 'Debe ingresar el nombre del área.',
-                'name.unique'   => 'Ya existe un área con ese nombre.',
-                'code.unique'   => 'El código ingresado ya está siendo utilizado por otra área.',
-            ]
-        );
-
-        $validated['active'] =
-            $request->boolean('active');
-
-        /* GENERAR CÓDIGO SI NO EXISTE */
-        if (empty($validated['code'])) {
-
-            $validated['code'] = $area->code;
-
-            if (empty($validated['code'])) {
-
-                $validated['code'] =
-                    sprintf(
-                        'AREA-%04d',
-                        $area->id
-                    );
-            }
+        if (! in_array($active, ['0', '1', 'all'], true)) {
+            $active = '1';
         }
 
-        $area->update($validated);
+        return Area::query()
+            ->withCount(['users', 'documentSeries', 'documents'])
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($areaQuery) use ($search) {
+                    $areaQuery->where('name', 'like', "%{$search}%")
+                        ->orWhere('code', 'like', "%{$search}%")
+                        ->orWhere('description', 'like', "%{$search}%");
+                });
+            })
+            ->when($active !== 'all', fn($query) => $query->where('active', $active === '1'))
+            ->latest('id')
+            ->paginate(config('crud.pagination', 12))
+            ->withQueryString();
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área actualizada correctamente.'
+    private function validateData(Request $request, ?Area $area = null): array
+    {
+        return $request->validate([
+            'name' => [
+                'required',
+                'max:255',
+                Rule::unique('areas', 'name')->ignore($area),
+            ],
+            'code' => [
+                'nullable',
+                'max:50',
+                Rule::unique('areas', 'code')->ignore($area),
+            ],
+            'description' => ['nullable', 'max:1000'],
+            'active' => ['nullable', 'boolean'],
+        ], [
+            'name.required' => 'Debe ingresar el nombre del área.',
+            'name.unique' => 'Ya existe un área con ese nombre.',
+            'code.unique' => 'El código ingresado ya está siendo utilizado.',
         ]);
     }
 
-    public function destroy($id)
+    private function generateCode(?Area $area = null): string
     {
-        $area = Area::findOrFail($id);
-        $area->update([
-            'active' => false
-        ]);
+        if ($area?->code) {
+            return $area->code;
+        }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Área desactivada correctamente.'
-        ]);
+        return sprintf('AREA-%04d', $area?->id ?? (Area::max('id') + 1));
+    }
+
+    private function ensurePermission(Request $request, string $permission): void
+    {
+        abort_unless(
+            $request->user()->isSystemOwner()
+                || $request->user()->can($permission),
+            403
+        );
     }
 }

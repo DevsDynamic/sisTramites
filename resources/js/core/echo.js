@@ -1,4 +1,4 @@
-import { showToast } from './toast';
+import { showToast } from '../ui/toast';
 
 if (window.Echo) {
 

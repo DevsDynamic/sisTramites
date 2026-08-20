@@ -1,0 +1,25 @@
+html[data-theme="dark"] {
+    --app-bg: #0f172a;
+    --card-bg: #111827;
+    --topbar-bg: rgba(17, 24, 39, .85);
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --border-color: rgba(255, 255, 255, .08);
+    --hover-bg: rgba(255, 255, 255, .06);
+    --shadow:
+        0 4px 14px rgba(0, 0, 0, .35),
+        0 1px 3px rgba(0, 0, 0, .30);
+}
+
+html[data-theme="dark"] .btn-close {
+    filter: invert(1);
+}
+
+html[data-theme="dark"] .modal-content,
+html[data-theme="dark"] .dropdown-menu,
+html[data-theme="dark"] .offcanvas,
+html[data-theme="dark"] .list-group-item {
+    background: var(--card-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}

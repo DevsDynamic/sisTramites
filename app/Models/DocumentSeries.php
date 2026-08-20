@@ -7,8 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class DocumentSeries extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
         'document_type_id',
         'area_id',
@@ -26,29 +24,6 @@ class DocumentSeries extends Model
         'active' => 'boolean',
     ];
 
-    public function scopeActive($query)
-    {
-        return $query->where('active', true);
-    }
-
-    public function scopeSearch($query, $search)
-    {
-        if (!$search) {
-            return $query;
-        }
-
-        return $query->where(function ($q) use ($search) {
-            $q->where('prefix', 'like', "%{$search}%")
-                ->orWhereHas('documentType', function ($sub) use ($search) {
-                    $sub->where(
-                        'name',
-                        'like',
-                        "%{$search}%"
-                    );
-                });
-        });
-    }
-
     public function documentType()
     {
         return $this->belongsTo(
@@ -64,6 +39,11 @@ class DocumentSeries extends Model
         );
     }
 
+    public function documents()
+    {
+        return $this->hasMany(Document::class);
+    }
+
     public function previewCode(): string
     {
         return $this->prefix . '-' . str_pad(
@@ -74,11 +54,23 @@ class DocumentSeries extends Model
         );
     }
 
-    // 🔥 genera correlativo (base simple, luego lo hacemos service pro)
-    public function generateCode()
+    public function scopeActive($query)
     {
-        $this->current_number++;
+        return $query->where('active', true);
+    }
 
-        return $this->prefix . '-' . str_pad($this->current_number, $this->padding, '0', STR_PAD_LEFT);
+    public function canDelete(): bool
+    {
+        return ! $this->documents()->exists();
+    }
+
+    public function canDeactivate(): bool
+    {
+        return $this->active;
+    }
+
+    public function canActivate(): bool
+    {
+        return !$this->active;
     }
 }

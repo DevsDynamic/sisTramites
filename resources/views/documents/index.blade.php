@@ -1,105 +1,60 @@
 @extends('layouts.app')
 
+@section('title', 'Documentos')
+
 @section('content')
+    <x-crud.index>
+        <x-slot:header>
+            <x-crud.header title="Documentos" description="Consulta y gestiona los documentos de tu alcance.">
+                <x-slot:toolbar>
+                    @can('documents.create')
+                        <a href="{{ route('documents.create') }}" class="btn btn-success"><i class="ti ti-plus me-1"></i>Nuevo documento</a>
+                    @endcan
+                </x-slot:toolbar>
+            </x-crud.header>
+        </x-slot:header>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="page-title mb-1">
-            Documentos
-        </h1>
-        <div class="text-secondary">
-            Gestión documental
-        </div>
-    </div>
-
-    <a href="{{ route('documents.create') }}" class="btn btn-primary">
-        <i class="ti ti-plus"></i>
-        Nuevo documento
-    </a>
-</div>
-
-<div class="row row-cards">
-    @forelse($documents as $document)
-        <div class="col-md-4">
-            <div class="card card h-100">
-                {{-- HEADER --}}
-                <div class="card-header">
-                    <div>
-                        <div class="fw-bold fs-3">
-                            {{ $document->subject }}
-                        </div>
-                        <div class="text-secondary">
-                            {{ $document->type?->name }}
-                        </div>
-                    </div>
-                    <span class="badge bg-blue-lt">
-                        {{-- {{ strtoupper($document->status) }} --}}
-                    </span>
+        <x-slot:filters>
+            <x-crud.filters>
+                <div class="col-lg-4">
+                    <x-crud.search name="search" placeholder="Buscar por correlativo o asunto..." />
                 </div>
-
-                {{-- BODY --}}
-                <div class="card-body">
-                    <div class="mb-3">
-                        <div class="text-secondary small">
-                            Descripción
-                        </div>
-                        <div>
-                            {{ Str::limit($document->description, 120) }}
-                        </div>
-                    </div>
-                    <div class="row text-center">
-                        {{-- FILES --}}
-                        <div class="col-6">
-                            <div class="text-secondary small">
-                                Adjuntos
-                            </div>
-                            <div class="fw-bold">
-                                {{ $document->attachments->count() }}
-                            </div>
-                        </div>
-                        {{-- DATE --}}
-                        <div class="col-6">
-                            <div class="text-secondary small">
-                                Fecha
-                            </div>
-                            <div class="fw-bold">
-                                {{ $document->created_at->format('d/m/Y') }}
-                            </div>
-                        </div>
-                    </div>
+                <div class="col-lg-2 col-md-4">
+                    <select name="status" class="form-select" data-crud-filter>
+                        <option value="">Todos los estados</option>
+                        @foreach (\App\Enums\DocumentStatus::cases() as $status)
+                            <option value="{{ $status->value }}" @selected(request('status') === $status->value)>{{ $status->label() }}</option>
+                        @endforeach
+                    </select>
                 </div>
-
-                {{-- FOOTER --}}
-                <div class="card-footer bg-transparent border-0">
-                    <a
-                        href="{{ route('documents.show', $document) }}"
-                        class="btn btn-primary w-100">
-                        <i class="ti ti-eye"></i>
-                        Ver documento
-                    </a>
+                <div class="col-lg-2 col-md-4">
+                    <select name="document_type_id" class="form-select" data-crud-filter>
+                        <option value="">Todos los tipos</option>
+                        @foreach ($types as $type)
+                            <option value="{{ $type->id }}" @selected((string) request('document_type_id') === (string) $type->id)>{{ $type->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-            </div>
-        </div>
-    @empty
-        <div class="col-12">
-            <div class="empty">
-                <div class="empty-icon">
-                    <i class="ti ti-file fs-1"></i>
+                <div class="col-lg-2 col-md-4">
+                    <select name="area_id" class="form-select" data-crud-filter>
+                        <option value="">Todas las áreas</option>
+                        @foreach ($areas as $area)
+                            <option value="{{ $area->id }}" @selected((string) request('area_id') === (string) $area->id)>{{ $area->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
-                <p class="empty-title">
-                    No hay documentos
-                </p>
-            </div>
-        </div>
-    @endforelse
-</div>
+                <div class="col-lg-2 col-md-4">
+                    <select name="sort" class="form-select" data-crud-filter>
+                        <option value="activity" @selected(request('sort', 'activity') === 'activity')>Última actividad</option>
+                        <option value="newest" @selected(request('sort') === 'newest')>Más recientes</option>
+                        <option value="code" @selected(request('sort') === 'code')>Correlativo</option>
+                    </select>
+                </div>
+            </x-crud.filters>
+        </x-slot:filters>
 
-<div class="mt-4">
-    {{ $documents->links() }}
-</div>
-
+        <div id="documentsResults">@include('documents.partials.results')</div>
+    </x-crud.index>
 @endsection
 
-@push('module-js')
-    @vite('resources/js/modules/documents.js')
-@endpush
+@section('module', 'resources/js/modules/documents.js')

@@ -1,0 +1,29 @@
+.settings-preview {
+    display: block;
+    width: 100%;
+    margin: 0 auto;
+    border: 1px solid var(--tblr-border-color, #dce1e7);
+    border-radius: 12px;
+    object-fit: contain;
+    background: var(--tblr-bg-surface-secondary, #f6f8fb);
+}
+
+.settings-logo-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.settings-preview-logo {
+    height: 180px;
+}
+
+.settings-preview-favicon {
+    width: 96px;
+    height: 96px;
+}
+
+.settings-preview-background {
+    height: 180px;
+    object-fit: cover;
+}

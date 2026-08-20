@@ -8,93 +8,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="icon" href="{{ asset('storage/' . setting()?->favicon) }}">
-    
+
     <title>@yield('title')</title>
 
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet" />
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 
-    <style>
-        body {
-            /* margin: 0;
-            background: #f5f7fb; */
-            margin: 0;
-            padding: 0;
-            overflow-x: hidden;
-            background: #f5f7fb;
-            font-family: Inter, sans-serif;
-        }
-
-        .login {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .login-left {
-            /* flex: 1; */
-            width: calc(100% - 520px);
-            background-size: cover;
-            background-position: center;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-repeat: no-repeat;
-        }
-
-        .login-left::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-
-            background:
-                radial-gradient(circle at top right,
-                    rgba(255, 255, 255, .12),
-                    transparent 35%);
-        }
-
-        .overlay-content {
-            text-align: center;
-            color: white;
-            padding: 40px;
-        }
-
-        .login-logo {
-            width: 110px;
-            height: 110px;
-            object-fit: contain;
-            margin-bottom: 25px;
-            border-radius: 100px;
-            background: white;
-            padding: 15px;
-        }
-
-        .login-right {
-            width: 520px;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 50px;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 380px;
-        }
-
-        @media(max-width:992px) {
-
-            .login-left {
-                display: none;
-            }
-
-            .login-right {
-                width: 100%;
-            }
-        }
-    </style>
+    @vite(['resources/css/auth.css'])
 </head>
 
 <body>

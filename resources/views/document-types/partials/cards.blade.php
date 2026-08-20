@@ -1,50 +1,64 @@
 <div id="documentTypesContainer" class="row row-cards">
-        @forelse($types as $type)
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <div class="fw-bold fs-3">
-                                    {{ $type->name }}
-                                </div>
-                                <div class="text-secondary">
-                                    {{ $type->code }}
-                                </div>
-                            </div>
-                            <span
-                                class="badge
-                            {{ $type->active ? 'bg-success-lt' : 'bg-danger-lt' }}">
-                                {{ $type->active ? 'Activo' : 'Inactivo' }}
-                            </span>
-                        </div>
-                        <div class="mt-4 d-flex gap-2">
-                            {{-- EDIT --}}
-                            <button class="btn btn-outline-primary btn-sm edit-btn" data-id="{{ $type->id }}"
-                                data-name="{{ $type->name }}" data-code="{{ $type->code }}"
-                                data-active="{{ $type->active }}" data-bs-toggle="modal" data-bs-target="#editModal">
-                                <i class="ti ti-edit"></i>
-                            </button>
 
-                            {{-- DELETE --}}
-                            <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $type->id }}"
-                                data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @empty
-            <div class="col-12">
-                <div class="empty">
-                    <div class="empty-icon">
-                        <i class="ti ti-file-settings fs-1"></i>
-                    </div>
-                    <p class="empty-title">
-                        No hay tipos de documentos registrados
-                    </p>
-                </div>
-            </div>
-        @endforelse
-    </div>
+    @forelse($types as $type)
+        <x-crud.card>
+
+            {{-- HEADER --}}
+            <x-slot:header>
+                <x-crud.card-header :title="$type->name" :subtitle="$type->code">
+                    <x-slot:badge>
+                        <x-crud.badge :active="$type->active" modal="activeModal" :dataset="[
+                            'id' => $type->id,
+                            'name' => $type->name,
+                            'entity' => 'Tipo de documento',
+                            'url' => route('document-types.active', $type),
+                            'active' => $type->active ? 'deactivate' : 'activate',
+                        ]" />
+                    </x-slot:badge>
+                </x-crud.card-header>
+            </x-slot:header>
+
+            {{-- Información adicional futura --}}
+
+            {{-- FOOTER --}}
+            <x-slot:footer>
+                <x-crud.actions>
+                    {{-- Editar --}}
+                    <x-crud.button-action color="warning" icon="ti ti-edit" title="Editar" size="sm" modal="editModal" class="edit-btn"
+                        :dataset="[
+                            'url' => route('document-types.update', $type),
+                            'id' => $type->id,
+                            'name' => $type->name,
+                            'code' => $type->code,
+                            'active' => $type->active,
+                        ]" />
+
+                    {{-- Activar / Desactivar --}}
+                    @if ($type->canDeactivate() || $type->canActivate())
+                        <x-crud.button-action :color="$type->active ? 'danger' : 'success'" :icon="$type->active ? 'ti ti-toggle-right' : 'ti ti-toggle-left'" :title="$type->active ? 'Desactivar' : 'Activar'" modal="activeModal"
+                             size="sm"  class="active-btn" :dataset="[
+                                'active' => $type->active ? 'deactivate' : 'activate',
+                                'entity' => 'Tipo de documento',
+                                'name' => $type->name,
+                                'url' => route('document-types.active', $type),
+                            ]" />
+                    @endif
+
+                    {{-- Eliminar --}}
+                    @if ($type->canDelete())
+                        <x-crud.button-action color="danger" icon="ti ti-trash" title="Eliminar" modal="deleteModal"
+                             size="sm"  class="delete-btn" :dataset="[
+                                'url' => route('document-types.destroy', $type),
+                                'entity' => 'Tipo de documento',
+                                'name' => $type->name,
+                            ]" />
+                    @endif
+                </x-crud.actions>
+            </x-slot:footer>
+        </x-crud.card>
+    @empty
+        <x-crud.empty icon="ti ti-file-settings" title="No hay tipos de documentos registrados"
+            description="Empieza creando el primer tipo de documento." action action-text="Nuevo tipo de documento"
+            action-modal="createModal" />
+    @endforelse
+</div>

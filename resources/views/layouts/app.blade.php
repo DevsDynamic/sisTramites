@@ -18,26 +18,31 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
-    @vite(['resources/js/app.js','resources/css/app.css'])
-    @stack('module-js')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-    @include('layouts.styles')
+    @hasSection('module')
+        @vite(View::yieldContent('module'))
+    @endif
+
+    @include('layouts.partials.styles')
 
 </head>
 
 <body>
     <div class="layout">
         {{-- SIDEBAR --}}
-        @include('layouts.sidebar')
+        @include('layouts.partials.sidebar')
+
+        <div class="sidebar-overlay"></div>
 
         {{-- MAIN --}}
         <div class="main">
 
             {{-- TOPBAR --}}
-            @include('layouts.topbar')
+            @include('layouts.partials.topbar')
 
             {{-- ALERTS --}}
-            @include('layouts.alerts')
+            @include('layouts.partials.alerts')
 
             {{-- CONTENT --}}
             <main class="content">
@@ -45,13 +50,13 @@
             </main>
 
             {{-- FOOTER --}}
-            @include('layouts.footer')
+            @include('layouts.partials.footer')
 
         </div>
     </div>
     @include('components.toast')
     {{-- SCRIPTS --}}
-    @include('layouts.scripts')
+    @include('layouts.partials.scripts')
     @stack('scripts')
 </body>
 

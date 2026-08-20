@@ -29,4 +29,20 @@ class DocumentType extends Model
     {
         return $query->where('active', true);
     }
+
+    public function canDelete(): bool
+    {
+        return
+            !$this->documents()->exists();
+    }
+
+    public function canDeactivate(): bool
+    {
+        return $this->active;
+    }
+
+    public function canActivate(): bool
+    {
+        return !$this->active;
+    }
 }

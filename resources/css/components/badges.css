@@ -1,0 +1,103 @@
+/* BADGES */
+
+.badge {
+
+    font-weight: 600;
+
+    border-radius: 999px;
+
+    padding: .45rem .75rem;
+
+}
+
+.badge.cursor-pointer {
+
+    cursor: pointer;
+
+    transition: .2s;
+
+}
+
+.badge.cursor-pointer:hover {
+
+    transform: translateY(-1px);
+
+}
+
+.status-badge {
+
+    font-size: .75rem;
+
+}
+
+/* STATUS BADGES */
+
+.badge-notification {
+
+    min-width: 24px;
+    height: 24px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 8px;
+
+    border-radius: 999px;
+
+    background: #ef4444;
+
+    color: #fff;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+}
+
+/* EXPIRATION */
+
+.expiration {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 8px 16px;
+
+    border-radius: 999px;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+.expiration.success {
+
+    background: #ecfdf5;
+
+    color: #16a34a;
+
+}
+
+.expiration.warning {
+
+    background: #fef3c7;
+
+    color: #d97706;
+
+}
+
+.expiration.danger {
+
+    background: #fee2e2;
+
+    color: #dc2626;
+
+}

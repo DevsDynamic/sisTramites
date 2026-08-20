@@ -1,41 +1,86 @@
 <div id="rolesContainer" class="row row-cards">
-        @foreach ($roles as $role)
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <div class="fw-bold fs-3">
-                                    {{ $role->name }}
-                                </div>
-                                <div class="text-secondary">
-                                    {{ $role->permissions->count() }}
-                                    permisos
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            @foreach ($role->permissions as $permission)
-                                <span class="badge bg-primary-lt mb-1">
-                                    {{ str($permission->name)->replace('.', ' ')->title() }}
-                                </span>
-                            @endforeach
-                        </div>
-                        <div class="mt-4 d-flex gap-2">
-                            {{-- EDIT --}}
-                            <button class="btn btn-outline-primary btn-sm edit-btn" data-id="{{ $role->id }}"
-                                data-name="{{ $role->name }}" data-permissions='@json($role->permissions->pluck('name'))'
-                                data-bs-toggle="modal" data-bs-target="#editModal">
-                                <i class="ti ti-edit"></i>
-                            </button>
-                            {{-- DELETE --}}
-                            <button class="btn btn-outline-danger btn-sm delete-btn" data-id="{{ $role->id }}"
-                                data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    @forelse ($roles as $role)
+        @php
+            $canManageRole = $canManageSystem || ! $role->isSystem();
+        @endphp
+
+        <x-crud.card :stretch="false">
+            <x-slot:header>
+                <x-crud.card-header
+                    :title="$role->name"
+                    :subtitle="$role->permissions->count() . ' permiso(s)'"
+                >
+                    @if ($role->isSystem())
+                        <x-slot:badge>
+                            <span class="badge bg-purple-lt">
+                                <i class="ti ti-lock me-1"></i>
+                                Sistema
+                            </span>
+                        </x-slot:badge>
+                    @endif
+                </x-crud.card-header>
+            </x-slot:header>
+
+            <div class="d-flex flex-wrap gap-2">
+                @forelse ($role->permissions as $permission)
+                    <span
+                        class="badge bg-primary-lt"
+                        data-bs-toggle-tooltip="tooltip"
+                        title="Código interno: {{ $permission->name }}"
+                    >
+                        {{ $permission->display_name }}
+                    </span>
+                @empty
+                    <span class="badge bg-secondary-lt">Sin permisos asignados</span>
+                @endforelse
             </div>
-        @endforeach
-    </div>
+
+            <x-slot:footer>
+                <x-crud.actions>
+                    @if ($canManageRole)
+                        <x-crud.button-action
+                            permission="roles.edit"
+                            color="warning"
+                            icon="ti ti-edit"
+                            title="Editar"
+                            size="sm"
+                            modal="editModal"
+                            class="edit-btn"
+                            :dataset="[
+                                'url' => route('roles.update', $role),
+                                'id' => $role->id,
+                                'name' => $role->name,
+                                'permissions' => $role->permissions->pluck('name')->toJson(),
+                            ]"
+                        />
+
+                        @if ($role->canDelete())
+                            <x-crud.button-action
+                                permission="roles.delete"
+                                color="danger"
+                                icon="ti ti-trash"
+                                title="Eliminar"
+                                modal="deleteModal"
+                                size="sm"
+                                :dataset="[
+                                    'url' => route('roles.destroy', $role),
+                                    'entity' => 'Rol',
+                                    'name' => $role->name,
+                                ]"
+                            />
+                        @endif
+                    @endif
+                </x-crud.actions>
+            </x-slot:footer>
+        </x-crud.card>
+    @empty
+        <x-crud.empty
+            icon="ti ti-shield-lock"
+            title="No hay roles registrados"
+            description="Empieza creando el primer rol operativo."
+            action
+            action-text="Nuevo rol"
+            action-modal="createModal"
+        />
+    @endforelse
+</div>

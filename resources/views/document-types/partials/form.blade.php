@@ -1,9 +1,4 @@
-<div class="modal-header">
-    <h3 class="modal-title" id="{{ $prefix }}_modalTitle">
-        Nuevo tipo de documento
-    </h3>
-    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-</div>
+<x-crud.modal-header :title="$prefix == 'create' ? 'Nuevo tipo de documento' : 'Editar tipo de documento'" />
 
 <div class="modal-body">
     <div class="row">
@@ -13,8 +8,8 @@
                 <label class="form-label">
                     Tipo de documento
                 </label>
-                <input type="text" name="name" id="{{ $prefix }}_name" class="form-control"
-                    placeholder="Ej: PDF" required>
+                <input type="text" name="name" id="{{ $prefix }}_name" class="form-control" placeholder="Ej: PDF"
+                    required>
             </div>
         </div>
 
@@ -23,6 +18,9 @@
             <div class="mb-3">
                 <label class="form-label">
                     Código
+                    <i class="ti ti-info-circle text-secondary" data-bs-toggle-tooltip="tooltip" data-bs-placement="top"
+                        title="Opcional. Si lo dejas vacío, el sistema generará un código automáticamente.">
+                    </i>
                 </label>
                 <input type="text" name="code" id="{{ $prefix }}_code" class="form-control"
                     placeholder="TD0001">
@@ -34,17 +32,11 @@
     <label class="form-check form-switch">
         <input type="checkbox" name="active" id="{{ $prefix }}_active" class="form-check-input" checked>
         <span class="form-check-label">
-            Tipo de documento activa
+            Activo
         </span>
     </label>
 </div>
 
-<div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-        Cancelar
-    </button>
-    <button class="btn btn-primary" id="{{ $prefix }}_submitButton">
-        <i class="ti ti-device-floppy"></i>
-        Guardar
-    </button>
-</div>
+<x-crud.modal-footer :text="$prefix == 'create' ? 'Guardar' : 'Actualizar'" 
+                    :icon="$prefix == 'create' ? 'ti ti-device-floppy' : 'ti ti-edit'" 
+                    :color="$prefix == 'create' ? 'success' : 'warning'"/>

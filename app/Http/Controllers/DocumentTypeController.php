@@ -5,146 +5,175 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\DocumentType;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class DocumentTypeController extends Controller
 {
     public function index()
     {
-        $types = DocumentType::query()
-            ->latest()
-            ->paginate(12);
-
         return view(
             'document-types.index',
-            compact('types')
+            [
+                'types' => $this->getItems()
+            ]
         );
     }
 
     public function cards()
     {
-        $types = DocumentType::latest()
-            ->paginate(12);
-
         return view(
-            'document-types.partials.cards',
-            compact('types')
+            'document-types.partials.results',
+            [
+                'types' => $this->getItems()
+            ]
         );
     }
 
-    public function create()
+    private function getItems()
     {
-        //
+        $active = request('active', '1');
+
+        if (! in_array($active, ['0', '1', 'all'], true)) {
+            $active = '1';
+        }
+
+        return DocumentType::query()
+            ->when(
+                request('search'),
+                function ($query, $search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where(
+                            'name',
+                            'like',
+                            "%{$search}%"
+                        )
+                            ->orWhere(
+                                'code',
+                                'like',
+                                "%{$search}%"
+                            );
+                    });
+                }
+            )
+
+            ->when(
+                $active !== 'all',
+                fn($query) =>
+                $query->where(
+                    'active',
+                    $active === '1'
+                )
+            )
+            ->latest('id')
+            ->paginate(
+                config('crud.pagination', 12)
+            )
+            ->withQueryString();
+    }
+
+    private function validateData(Request $request, ?DocumentType $type = null): array
+    {
+        return $request->validate(
+            [
+                'name' => [
+                    'required',
+                    'max:255',
+                    Rule::unique('document_types', 'name')
+                        ->ignore($type),
+                ],
+
+                'code' => [
+                    'nullable',
+                    'max:50',
+                    Rule::unique('document_types', 'code')
+                        ->ignore($type),
+                ],
+            ],
+            [
+                'name.required' => 'Debe ingresar el nombre del tipo de documento.',
+                'name.unique'   => 'Ya existe un tipo de documento con ese nombre.',
+                'code.unique'   => 'El código ingresado ya está siendo utilizado.',
+            ]
+        );
+    }
+
+    private function generateCode(?DocumentType $type = null): string
+    {
+        if ($type && $type->code) {
+            return $type->code;
+        }
+
+        $next = $type
+            ? $type->id
+            : (DocumentType::max('id') + 1);
+
+        return sprintf(
+            'TDOC-%04d',
+            $next
+        );
     }
 
     public function store(Request $request)
     {
-        $validated = $request->validate(
-            [
-                'name' => 'required|max:255|unique:document_types,name',
-                'code' => 'nullable|max:50|unique:document_types,code',
-            ],
-            [
-                'name.required' => 'Debe ingresar el nombre del tipo de documento.',
-                'name.unique'   => 'Ya existe un tipo de documento con ese nombre.',
-                'code.unique'   => 'El código ingresado ya está siendo utilizado.',
-            ]
-        );
+        $data = $this->validateData($request);
 
-        $validated['active'] =
+        $data['active'] = $request->boolean('active');
+
+        $data['code'] ??=
+            $this->generateCode();
+
+        $documentType = DocumentType::create($data);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Tipo de documento creado correctamente.',
+            'item' => $documentType->only(['id', 'name', 'code']),
+        ]);
+    }
+
+    public function update(Request $request, DocumentType $documentType)
+    {
+        $data =
+            $this->validateData(
+                $request,
+                $documentType
+            );
+
+        $data['active'] =
             $request->boolean('active');
 
-        /*
-        |--------------------------------------------------------------
-        | CÓDIGO AUTOMÁTICO
-        |--------------------------------------------------------------
-        */
+        $data['code'] ??=
+            $this->generateCode(
+                $documentType
+            );
 
-        if (empty($validated['code'])) {
-
-            $nextNumber =
-                DocumentType::max('id') + 1;
-
-            $validated['code'] =
-                sprintf(
-                    'TDOC-%04d',
-                    $nextNumber
-                );
-        }
-
-        DocumentType::create($validated);
+        $documentType->update($data);
 
         return response()->json([
             'success' => true,
-            'message' => 'Tipo de documento creado correctamente.'
+            'message' => 'Tipo de documento actualizado correctamente.',
         ]);
     }
 
-    public function edit(DocumentType $documentType)
+    public function active(DocumentType $documentType)
     {
-        //
-    }
-
-    public function update(Request $request, $id)
-    {
-        $type =
-            DocumentType::findOrFail($id);
-
-        $validated = $request->validate(
-            [
-                'name' => 'required|max:255|unique:document_types,name,' . $type->id,
-                'code' => 'nullable|max:50|unique:document_types,code,' . $type->id,
-            ],
-            [
-                'name.required' => 'Debe ingresar el nombre del tipo de documento.',
-                'name.unique'   => 'Ya existe un tipo de documento con ese nombre.',
-                'code.unique'   => 'El código ingresado ya está siendo utilizado.',
-            ]
-        );
-
-        $validated['active'] =
-            $request->boolean('active');
-
-        /*
-        |--------------------------------------------------------------
-        | GENERAR CÓDIGO SI NO EXISTE
-        |--------------------------------------------------------------
-        */
-
-        if (empty($validated['code'])) {
-
-            $validated['code'] =
-                $type->code;
-
-            if (empty($validated['code'])) {
-
-                $validated['code'] =
-                    sprintf(
-                        'TDOC-%04d',
-                        $type->id
-                    );
-            }
-        }
-
-        $type->update($validated);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Tipo de documento actualizado correctamente.'
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $type =
-            DocumentType::findOrFail($id);
-
-        $type->update([
-            'active' => false
+        $documentType->update([
+            'active' => ! $documentType->active,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Tipo de documento desactivado correctamente.'
+            'message' => 'Estado actualizado correctamente.',
+        ]);
+    }
+
+    public function destroy(DocumentType $documentType)
+    {
+        $documentType->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Registro eliminado correctamente.',
         ]);
     }
 }

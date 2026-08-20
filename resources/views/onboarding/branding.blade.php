@@ -1,221 +1,118 @@
-@extends('layouts.onboarding.app')
+@extends('layouts.app')
 
 @section('content')
-    @if ($errors->any())
-        <div class="alert alert-danger mb-4">
-            <ul class="mb-0">
+    <x-crud.index>
+        <x-slot:header>
+            <x-crud.header title="Identidad visual" description="Personaliza cómo se presenta el sistema a los usuarios.">
+                <x-slot:toolbar>
+                    <a href="{{ route('onboarding.welcome') }}" class="btn btn-outline-secondary">
+                        <i class="ti ti-arrow-left me-1"></i>Volver
+                    </a>
+                </x-slot:toolbar>
+            </x-crud.header>
+        </x-slot:header>
 
-                @foreach ($errors->all() as $error)
-                    <li>
-                        {{ $error }}
-                    </li>
-                @endforeach
+        <form method="POST" enctype="multipart/form-data" action="{{ route('onboarding.branding.store') }}">
+            @csrf
 
-            </ul>
-        </div>
-    @endif
-    <form method="POST" enctype="multipart/form-data" action="{{ route('onboarding.branding.store') }}">
-        @csrf
-        <div class="row">
-            {{-- LOGO --}}
-            <div class="col-md-4">
-                <div class="branding-upload-card">
-                    <label class="branding-label">
-                        Logo Empresa
-                    </label>
-                    <img id="logo-preview"
-                        src="{{ setting()?->logo ? asset('storage/' . setting()->logo) : 'https://placehold.co/200x200?text=LOGO' }}"
-                        class="branding-preview branding-preview-logo">
-                    <input type="file" name="logo" class="form-control" accept="image/*"
-                        onchange="previewLogo(event)">
-                </div>
-            </div>
-
-            {{-- FAVICON --}}
-            <div class="col-md-4">
-                <div class="branding-upload-card">
-                    <label class="branding-label">
-                        Favicon
-                    </label>
-                    <img id="favicon-preview"
-                        src="{{ setting()?->favicon ? asset('storage/' . setting()->favicon) : 'https://placehold.co/64x64?text=ICON' }}"
-                        class="branding-preview branding-preview-favicon">
-                    <input type="file" name="favicon" class="form-control" accept="image/*"
-                        onchange="previewFavicon(event)">
-                    <div class="branding-help">
-                        Recomendado: 64x64 PNG
-                    </div>
-                </div>
-            </div>
-
-            {{-- LOGIN BG --}}
-            <div class="col-md-4">
-                <div class="branding-upload-card">
-                    <label class="branding-label">
-                        Fondo Login
-                    </label>
-                    <img id="bg-preview"
-                        src="{{ setting()?->login_background ? asset('storage/' . setting()->login_background) : 'https://images.unsplash.com/photo-1521791136064-7986c2920216?q=80&w=1974' }}"
-                        class="branding-preview branding-preview-background">
-                    <input type="file" name="login_background" class="form-control" accept="image/*"
-                        onchange="previewBackground(event)">
-                </div>
-            </div>
-
-            {{-- COLORS --}}
-            <div class="col-md-12">
-                <div class="wizard-section-title mb-4">
-                    Personalización Visual
-                </div>
-                <div class="row g-4">
-                    {{-- PRIMARY --}}
-                    <div class="col-md-4">
-                        <label class="branding-label">
-                            Color Principal
-                        </label>
-                        <div class="branding-color-picker">
-                            <input type="color" name="primary_color" id="primaryColor"
-                                value="{{ old('primary_color', setting()?->primary_color ?? '#206bc4') }}"
-                                class="form-control form-control-color">
-                            <div>
-                                <div class="fw-bold" id="primaryColorText">
-                                    {{ setting()?->primary_color ?? '#206bc4' }}
-                                </div>
-                                <div class="text-secondary">
-                                    Botones y acciones
-                                </div>
-                            </div>
+            <div class="row row-cards mb-4">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <label class="form-label d-block">Logo de la empresa</label>
+                            <img id="logo-preview" class="settings-preview settings-preview-logo"
+                                src="{{ $settings->logo ? asset('storage/' . $settings->logo) : 'https://placehold.co/240x180?text=LOGO' }}" alt="Vista previa del logo">
+                            <input type="file" name="logo" class="form-control mt-3" accept="image/*" data-preview="logo-preview">
+                            <div class="form-hint">PNG, JPG o WEBP. Máximo 2 MB.</div>
                         </div>
                     </div>
+                </div>
 
-                    {{-- SIDEBAR --}}
-                    <div class="col-md-4">
-                        <label class="branding-label">
-                            Color Sidebar
-                        </label>
-                        <div class="branding-color-picker">
-                            <input type="color" name="sidebar_color" id="sidebarColor"
-                                value="{{ old('sidebar_color', setting()?->sidebar_color ?? '#111827') }}"
-                                class="form-control form-control-color">
-                            <div>
-                                <div class="fw-bold" id="sidebarColorText">
-                                    {{ setting()?->sidebar_color ?? '#111827' }}
-                                </div>
-                                <div class="text-secondary">
-                                    Menú lateral
-                                </div>
-                            </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <label class="form-label d-block">Favicon</label>
+                            <img id="favicon-preview" class="settings-preview settings-preview-favicon"
+                                src="{{ $settings->favicon ? asset('storage/' . $settings->favicon) : 'https://placehold.co/96x96?text=ICON' }}" alt="Vista previa del favicon">
+                            <input type="file" name="favicon" class="form-control mt-3" accept="image/*" data-preview="favicon-preview">
+                            <div class="form-hint">Se recomienda una imagen cuadrada. Máximo 1 MB.</div>
                         </div>
                     </div>
+                </div>
 
-                    {{-- SIDEBAR TEXT --}}
-                    <div class="col-md-4">
-                        <label class="branding-label">
-                            Color Texto Sidebar
-                        </label>
-
-                        <div class="branding-color-picker">
-
-                            <input type="color" name="sidebar_text_color" id="sidebarTextColor"
-                                value="{{ old('sidebar_text_color', setting()?->sidebar_text_color ?? '#ffffff') }}"
-                                class="form-control form-control-color">
-
-                            <div>
-                                <div class="fw-bold" id="sidebarTextColorText">
-
-                                    {{ old('sidebar_text_color', setting()?->sidebar_text_color ?? '#ffffff') }}
-
-                                </div>
-
-                                <div class="text-secondary">
-                                    Texto e íconos del menú
-                                </div>
-                            </div>
-
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <label class="form-label d-block">Fondo de inicio de sesión</label>
+                            <img id="background-preview" class="settings-preview settings-preview-background"
+                                src="{{ $settings->login_background ? asset('storage/' . $settings->login_background) : 'https://placehold.co/480x240?text=FONDO' }}" alt="Vista previa del fondo">
+                            <input type="file" name="login_background" class="form-control mt-3" accept="image/*" data-preview="background-preview">
+                            <div class="form-hint">Imagen horizontal. Máximo 4 MB.</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- ACTIONS --}}
-            <div class="d-flex justify-content-between mt-5">
-                <a href="{{ route('onboarding.company') }}" class="btn btn-outline-secondary">
-                    Atrás
-                </a>
-                <button type="submit" class="btn btn-primary px-5">
-                    Guardar y Continuar
-                </button>
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Colores del sistema</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row g-4">
+                        <div class="col-md-4">
+                            <label class="form-label">Color principal</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" name="primary_color" class="form-control form-control-color"
+                                    value="{{ old('primary_color', $settings->primary_color ?? '#206bc4') }}" data-color-value="primary-color-value">
+                                <span id="primary-color-value" class="fw-semibold">{{ old('primary_color', $settings->primary_color ?? '#206bc4') }}</span>
+                            </div>
+                            <div class="form-hint">Botones y acciones principales.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Color del menú lateral</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" name="sidebar_color" class="form-control form-control-color"
+                                    value="{{ old('sidebar_color', $settings->sidebar_color ?? '#111827') }}" data-color-value="sidebar-color-value">
+                                <span id="sidebar-color-value" class="fw-semibold">{{ old('sidebar_color', $settings->sidebar_color ?? '#111827') }}</span>
+                            </div>
+                            <div class="form-hint">Fondo de la navegación lateral.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Color del texto del menú</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <input type="color" name="sidebar_text_color" class="form-control form-control-color"
+                                    value="{{ old('sidebar_text_color', $settings->sidebar_text_color ?? '#ffffff') }}" data-color-value="sidebar-text-color-value">
+                                <span id="sidebar-text-color-value" class="fw-semibold">{{ old('sidebar_text_color', $settings->sidebar_text_color ?? '#ffffff') }}</span>
+                            </div>
+                            <div class="form-hint">Texto e íconos de la navegación lateral.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="ti ti-device-floppy me-1"></i>Guardar cambios
+                    </button>
+                </div>
             </div>
-        </div>
-    </form>
+        </form>
+    </x-crud.index>
 @endsection
 
 @push('scripts')
     <script>
-        function previewLogo(event) {
-            const reader = new FileReader();
+        document.querySelectorAll('[data-preview]').forEach(input => {
+            input.addEventListener('change', () => {
+                const file = input.files?.[0];
+                const preview = document.getElementById(input.dataset.preview);
 
-            reader.onload = function() {
-                document
-                    .getElementById('logo-preview')
-                    .src = reader.result;
-            }
-
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function previewFavicon(event) {
-            const reader = new FileReader();
-
-            reader.onload = function() {
-                document
-                    .getElementById('favicon-preview')
-                    .src = reader.result;
-            }
-
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        function previewBackground(event) {
-            const reader = new FileReader();
-
-            reader.onload = function() {
-                document
-                    .getElementById('bg-preview')
-                    .src = reader.result;
-            }
-
-            reader.readAsDataURL(event.target.files[0]);
-        }
-
-        /* PRIMARY COLOR */
-        document
-            .getElementById('primaryColor')
-            .addEventListener('input', function() {
-
-                document
-                    .getElementById('primaryColorText')
-                    .innerText = this.value;
+                if (file && preview) preview.src = URL.createObjectURL(file);
             });
+        });
 
-        /* SIDEBAR COLOR */
-        document
-            .getElementById('sidebarColor')
-            .addEventListener('input', function() {
-
-                document
-                    .getElementById('sidebarColorText')
-                    .innerText = this.value;
+        document.querySelectorAll('[data-color-value]').forEach(input => {
+            input.addEventListener('input', () => {
+                document.getElementById(input.dataset.colorValue).textContent = input.value;
             });
-
-        /* SIDEBAR TEXT COLOR */
-        document
-            .getElementById('sidebarTextColor')
-            ?.addEventListener('input', function() {
-
-                document
-                    .getElementById('sidebarTextColorText')
-                    .innerText = this.value;
-            });
+        });
     </script>
 @endpush

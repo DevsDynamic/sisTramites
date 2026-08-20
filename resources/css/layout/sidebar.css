@@ -1,0 +1,400 @@
+/* ==========================================================
+   SIDEBAR
+========================================================== */
+
+.sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+
+    width: 280px;
+    min-height: 100vh;
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 24px 18px;
+
+    background: var(--sidebar);
+    /* border-right: 1px solid rgba(255, 255, 255, .08); */
+    /* border-right: none; */
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    z-index: 1030;
+    /* 
+    box-shadow: 10px 0 30px rgba(0, 0, 0, .08); */
+}
+
+/* ==========================================================
+   SCROLLBAR
+========================================================== */
+
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    border-radius: 20px;
+    background: rgba(255, 255, 255, .18);
+}
+
+.sidebar {
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+
+        rgba(255, 255, 255, .18) transparent;
+
+}
+
+/* ==========================================================
+   BRAND
+========================================================== */
+
+.sidebar-brand {
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 10px;
+    margin-bottom: 14px;
+
+    border-radius: 18px;
+
+    text-decoration: none;
+
+    transition: .25s;
+}
+
+.sidebar-brand:hover {
+
+    background:
+        color-mix(in srgb, white 10%, transparent);
+
+    transform: translateY(-1px);
+}
+
+.sidebar-brand::after {
+
+    content: "";
+
+    flex: 0 0 10px;
+
+    width: 10px;
+    height: 10px;
+
+    display: block;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, .6);
+
+    animation: Pulse 2s infinite;
+
+}
+
+.sidebar-logo {
+
+    width: 58px;
+    height: 58px;
+
+    object-fit: contain;
+
+    border-radius: 16px;
+
+    background: #fff;
+
+    padding: 8px;
+
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, .08);
+}
+
+.sidebar-title {
+    color: var(--sidebar-text);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.sidebar-plan {
+    color: var(--sidebar-text);
+    font-size: 13px;
+    opacity: .7;
+}
+
+.sidebar-title,
+.sidebar-plan {
+
+    pointer-events: none;
+}
+
+/* ===========================
+   SIDEBAR BRAND
+=========================== */
+
+.sidebar-brand,
+.sidebar-brand:hover,
+.sidebar-brand:focus,
+.sidebar-brand:active,
+.sidebar-brand * {
+    text-decoration: none !important;
+}
+
+.sidebar-brand:hover .sidebar-title,
+.sidebar-brand:hover .sidebar-plan {
+    text-decoration: none !important;
+}
+
+.sidebar-title,
+.sidebar-plan {
+    color: var(--sidebar-text);
+}
+
+.sidebar-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.sidebar-plan {
+    font-size: .82rem;
+    opacity: .75;
+}
+
+/* ==========================================================
+   MENU
+========================================================== */
+
+.menu {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.menu-section {
+    color: var(--sidebar-text);
+    margin: 26px 0 6px;
+    padding: 0 8px;
+}
+
+.menu-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    opacity: .82;
+}
+
+.menu-divider {
+    height: 1px;
+    margin: 0 8px 8px;
+    background: color-mix(in srgb, var(--sidebar-text) 18%, transparent);
+}
+
+.menu-dropdown {
+
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-toggle {
+    width: 100%;
+    cursor: pointer;
+    position: relative;
+    border: 0;
+    appearance: none;
+    background: transparent;
+    color: var(--sidebar-text);
+    font: inherit;
+    text-align: left;
+}
+
+.menu-arrow,
+.menu-toggle .ti-chevron-down {
+
+    transition: transform .25s ease;
+}
+
+.menu-toggle[aria-expanded="true"] .ti-chevron-down {
+
+    transform: rotate(180deg);
+
+}
+
+.menu-item {
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    width: 100%;
+
+    padding: 13px 15px;
+
+    border-radius: 14px;
+
+    color: var(--sidebar-text);
+
+    text-decoration: none;
+
+    font-weight: 500;
+
+    transition:
+        background .25s,
+        color .25s,
+        transform .25s;
+}
+
+.menu-item i {
+
+    min-width: 22px;
+
+    font-size: 19px;
+
+    text-align: center;
+}
+
+.menu-item>span:first-of-type {
+
+    flex: 1;
+}
+
+.menu-toggle > span {
+    text-align: left;
+}
+
+.menu-toggle .ti-chevron-down {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.menu-item:hover {
+
+    background:
+        color-mix(in srgb,
+            white 12%,
+            transparent);
+
+    color: var(--sidebar-text);
+
+}
+
+.menu-toggle:hover {
+
+    background:
+        color-mix(in srgb,
+            white 12%,
+            transparent);
+
+}
+
+.menu-toggle.active-parent {
+    background: color-mix(in srgb, white 12%, transparent);
+    color: var(--sidebar-text);
+    font-weight: 600;
+}
+
+.menu-item.active {
+
+    background: #fff;
+
+    color: var(--primary);
+
+    font-weight: 700;
+
+    box-shadow:
+        0 4px 14px rgba(0, 0, 0, .10),
+        0 2px 6px rgba(0, 0, 0, .06);
+}
+
+.menu-item.active i {
+
+    color: var(--primary);
+}
+
+/* ==========================================================
+   SUBMENU
+========================================================== */
+
+.submenu {
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+
+    margin-top: 6px;
+    margin-left: 14px;
+
+    padding-left: 14px;
+
+    border-left:
+        1px solid color-mix(in srgb, var(--sidebar-text) 16%, transparent);
+}
+
+.submenu .menu-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: .94rem;
+}
+
+.collapse {
+
+    transition: height .35s ease;
+}
+
+/* oscurecen el fondo */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .35);
+    opacity: 0;
+    visibility: hidden;
+    transition: .25s;
+    z-index: 998;
+}
+
+.sidebar-overlay.show {
+
+    opacity: 1;
+
+    visibility: visible;
+
+}
+
+/* ==========================================================
+   RESPONSIVE
+========================================================== */
+
+@media (max-width: 992px) {
+
+    .sidebar {
+
+        transform: translateX(-100%);
+
+        transition: transform .3s ease;
+    }
+
+    .sidebar.show {
+
+        transform: translateX(0);
+    }
+}
+
+@media(min-width:992px) {
+
+    .sidebar-overlay {
+
+        display: none;
+
+    }
+
+}

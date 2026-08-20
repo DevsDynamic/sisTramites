@@ -1,33 +1,68 @@
 @extends('layouts.app')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h1 class="page-title mb-1">
-                Usuarios
-            </h1>
-            <div class="text-secondary">
-                Gestión de usuarios de usuarios de: 
-            </div>
+    <x-crud.index>
+        <x-slot:header>
+            <x-crud.header title="Usuarios" description="Administra las cuentas, roles y áreas del sistema">
+                <x-slot:toolbar>
+                    <x-crud.button-action permission="users.create" color="success" icon="ti ti-plus" text="Nuevo" modal="createModal" />
+                </x-slot:toolbar>
+            </x-crud.header>
+        </x-slot:header>
+
+        <x-slot:filters>
+            <x-crud.filters>
+                <div class="col-md-4">
+                    <x-crud.search placeholder="Buscar por nombre o correo..." />
+                </div>
+
+                <div class="col-md-2">
+                    <select name="active" class="form-select" data-crud-filter>
+                        <option value="1" @selected(request('active', '1') === '1')>Activos</option>
+                        <option value="0" @selected(request('active') === '0')>Inactivos</option>
+                        <option value="all" @selected(request('active') === 'all')>Todos</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="role" class="form-select" data-crud-filter>
+                        <option value="">Todos los roles</option>
+                        @foreach ($roles as $role)
+                            <option value="{{ $role->name }}" @selected(request('role') === $role->name)>
+                                {{ $role->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="area_id" class="form-select" data-crud-filter>
+                        <option value="">Todas las áreas</option>
+                        @foreach ($areas as $area)
+                            <option value="{{ $area->id }}" @selected((string) request('area_id') === (string) $area->id)>
+                                {{ $area->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </x-crud.filters>
+        </x-slot:filters>
+
+        <div id="usersResults">
+            @include('users.partials.results')
         </div>
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createModal">
-            <i class="ti ti-plus"></i>
-            Nuevo Usuario
-        </button>
-    </div>
+    </x-crud.index>
 
-    @include('users.partials.cards')
+    <x-crud.modal-create :action="route('users.store')">
+        @include('users.partials.form', ['prefix' => 'create'])
+    </x-crud.modal-create>
 
-    <div class="mt-4">
-        {{ $users->links() }}
-    </div>
+    <x-crud.modal-edit>
+        @include('users.partials.form', ['prefix' => 'edit'])
+    </x-crud.modal-edit>
 
-    {{-- MODALS --}}
-    @include('users.modals.create')
-    @include('users.modals.edit')
-    @include('users.modals.delete')
+    <x-crud.modal-active />
+    <x-crud.modal-delete entity="Usuario" />
 @endsection
 
-@push('module-js')
-    @vite('resources/js/modules/users.js')
-@endpush
+@section('module', 'resources/js/modules/users.js')
