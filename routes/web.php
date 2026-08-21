@@ -51,7 +51,7 @@ Route::middleware('auth')
             ->name('branding');
         Route::post('/branding', 'brandingStore')
             ->name('branding.store');
-        Route::get('/completed', 'completed')
+        Route::post('/completed', 'completed')
             ->name('completed');
         Route::get('/license', 'license')->name('license');
         Route::post('/license', 'licenseStore')->name('license.store');

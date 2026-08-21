@@ -76,5 +76,13 @@
                 </x-crud.card>
             @endif
         </div>
+        <div class="d-flex justify-content-end mt-4">
+            <form method="POST" action="{{ route('onboarding.completed') }}">
+                @csrf
+                <button type="submit" class="btn btn-success">
+                    <i class="ti ti-check me-1"></i>Finalizar configuraciÃ³n e ingresar
+                </button>
+            </form>
+        </div>
     </x-crud.index>
 @endsection

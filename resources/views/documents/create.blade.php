@@ -188,7 +188,7 @@
                                 <div id="selectedFilePreview" class="d-none mt-3 border rounded overflow-hidden bg-body-tertiary">
                                     <iframe id="selectedFileFrame" title="Vista previa del PDF seleccionado" class="w-100 border-0" style="height: 460px"></iframe>
                                 </div>
-                                <div class="form-hint">Solo PDF. Tamaño máximo permitido: 50 MB.</div>
+                                <div class="form-hint">Solo PDF. Tamaño máximo permitido: 100 MB.</div>
                             </div>
                         </div>
                     </div>

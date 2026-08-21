@@ -101,7 +101,7 @@ export async function ajaxFormSubmit(
 
         if (error.response?.status === 413) {
             showToast(
-                'El archivo supera el tamaño máximo permitido de 50 MB.',
+                'El archivo supera el tamaño máximo permitido de 100 MB.',
                 'danger'
             );
             return;

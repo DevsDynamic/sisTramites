@@ -111,7 +111,7 @@ class OnboardingController extends Controller
         }
 
         return redirect()
-            ->route('onboarding.welcome')
+            ->route('dashboard')
             ->with('success', 'Configuración inicial completada.');
     }
 

@@ -81,7 +81,7 @@ class DocumentController extends Controller
             'content'          => ['nullable'],
             'document_type_id' => ['required', 'exists:document_types,id'],
             'area_id' => ['required', 'exists:areas,id'],
-            'file'             => ['required', 'file', 'mimes:pdf', 'max:51200'],
+            'file'             => ['required', 'file', 'mimes:pdf', 'max:102400'],
             'signature_mode' => ['nullable', 'in:none,self,request'],
             'signer_user_id' => ['nullable', 'required_if:signature_mode,request', 'exists:users,id'],
             'workflow_template_id' => ['nullable', 'exists:workflow_templates,id'],

@@ -10,7 +10,9 @@
     </title>
 
     {{-- FAVICON --}}
-    <link rel="icon" href="">
+    @if (setting()?->favicon)
+        <link rel="icon" href="{{ asset('storage/' . setting()->favicon) }}">
+    @endif
 
     {{-- TABLER --}}
     <link href="https://cdn.jsdelivr.net/npm/@tabler/core@latest/dist/css/tabler.min.css" rel="stylesheet">
