@@ -1,0 +1,20 @@
+services:
+  signing-service:
+    build:
+      context: ./signing-service
+    restart: unless-stopped
+    environment:
+      TZ: America/Lima
+      SIGNER_TOKEN: ${INTERNAL_SIGNER_TOKEN:?Define INTERNAL_SIGNER_TOKEN en .env}
+      SIGNER_MAX_FILE_SIZE: 50MB
+      SIGNER_MAX_REQUEST_SIZE: 60MB
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:8088:8080"
+    networks:
+      - sistramites-internal
+
+networks:
+  sistramites-internal:
+    name: sistramites-internal

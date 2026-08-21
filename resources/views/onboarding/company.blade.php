@@ -35,7 +35,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Sitio web</label>
-                            <input type="url" name="website" class="form-control" placeholder="https://miempresa.com"
+                            <input type="text" name="website" class="form-control" placeholder="miempresa.com"
                                 value="{{ old('website', $settings->website) }}">
                         </div>
                         <div class="col-md-6">
@@ -47,7 +47,7 @@
                 </div>
 
                 <div class="card-footer text-end">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-success">
                         <i class="ti ti-device-floppy me-1"></i>Guardar cambios
                     </button>
                 </div>

@@ -8,6 +8,12 @@ class Setting extends Model
 {
     protected $fillable = [
         'company_name',
+        'plan_name',
+        'plan_id',
+        'license_starts_at',
+        'license_cycle',
+        'license_custom_days',
+        'license_expires_at',
         'logo',
         'favicon',
         'login_background',
@@ -20,4 +26,15 @@ class Setting extends Model
         'address',
         'onboarding_completed',
     ];
+
+    protected $casts = [
+        'license_starts_at' => 'date',
+        'license_expires_at' => 'date',
+        'onboarding_completed' => 'boolean',
+    ];
+
+    public function plan()
+    {
+        return $this->belongsTo(Plan::class);
+    }
 }

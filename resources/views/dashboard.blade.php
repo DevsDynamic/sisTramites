@@ -119,14 +119,14 @@
                     </div>
                     <div class="list-group list-group-flush">
                         @forelse ($inbox as $flow)
-                            <a href="{{ route('documents.show', $flow->document) }}" class="list-group-item list-group-item-action">
+                            <a href="{{ route('documents.show', $flow->workflow?->document) }}" class="list-group-item list-group-item-action">
                                 <div class="d-flex gap-3 align-items-center">
                                     <span class="avatar bg-warning-lt"><i class="ti ti-clock-hour-4"></i></span>
                                     <div class="min-w-0 flex-fill">
-                                        <div class="fw-semibold text-truncate">{{ $flow->document?->code }}</div>
-                                        <div class="text-secondary small text-truncate">{{ $flow->document?->subject }}</div>
+                                <div class="fw-semibold text-truncate">{{ $flow->workflow?->document?->code }}</div>
+                                <div class="text-secondary small text-truncate">{{ $flow->workflow?->document?->subject }} · {{ $flow->name }}</div>
                                     </div>
-                                    @if ($flow->sla_expired)
+                                    @if ($flow->overdue_at || ($flow->due_at && $flow->due_at->isPast()))
                                         <span class="badge bg-danger-lt">SLA vencido</span>
                                     @else
                                         <span class="badge bg-warning-lt">{{ ucfirst($flow->status) }}</span>

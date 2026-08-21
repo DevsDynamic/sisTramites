@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Services\PlanLimitService;
 
 class UserController extends Controller
 {
@@ -36,9 +37,10 @@ class UserController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PlanLimitService $planLimits)
     {
         $this->ensurePermission($request, 'users.create');
+        $planLimits->ensureAvailable('users');
 
         $data = $this->validateData($request);
         $this->ensureAdminRoleAssignment($request, $data['roles'] ?? []);

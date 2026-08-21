@@ -3,7 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Setting;
+use App\Models\Plan;
+use App\Services\PlanLimitService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Validation\Rule;
 
 class OnboardingController extends Controller
 {
@@ -36,6 +40,10 @@ class OnboardingController extends Controller
             'website' => ['nullable', 'string', 'max:255'],
             'address' => ['nullable', 'string', 'max:500'],
         ]);
+
+        if (filled($data['website'] ?? null) && ! preg_match('#^https?://#i', $data['website'])) {
+            $data['website'] = 'https://' . $data['website'];
+        }
 
         Setting::firstOrFail()->update($data);
 
@@ -105,6 +113,58 @@ class OnboardingController extends Controller
         return redirect()
             ->route('onboarding.welcome')
             ->with('success', 'Configuración inicial completada.');
+    }
+
+    public function license(Request $request, PlanLimitService $planLimits)
+    {
+        abort_unless($request->user()->isSystemOwner(), 403);
+        $settings = Setting::firstOrFail();
+        $plans = Plan::query()
+            ->where(function ($query) use ($settings) {
+                $query->where('active', true);
+
+                if ($settings->plan_id) {
+                    $query->orWhere('id', $settings->plan_id);
+                }
+            })
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('onboarding.license', [
+            'settings' => $settings,
+            'plans' => $plans,
+            'usage' => $planLimits->usage(),
+            'planUsage' => $plans->mapWithKeys(fn ($plan) => [$plan->id => $planLimits->usage($plan)]),
+        ]);
+    }
+
+    public function licenseStore(Request $request, PlanLimitService $planLimits)
+    {
+        abort_unless($request->user()->isSystemOwner(), 403);
+        $data = $request->validate([
+            'plan_id' => ['required', 'exists:plans,id'],
+            'license_starts_at' => ['required', 'date'],
+            'license_cycle' => ['required', Rule::in(['monthly', 'quarterly', 'semiannual', 'annual', 'custom'])],
+            'license_custom_days' => ['nullable', 'required_if:license_cycle,custom', 'integer', 'min:1', 'max:3650'],
+        ]);
+        $plan = Plan::findOrFail($data['plan_id']);
+        $planLimits->ensureCanAssign($plan);
+
+        $startsAt = Carbon::parse($data['license_starts_at']);
+        $expiresAt = match ($data['license_cycle']) {
+            'monthly' => $startsAt->copy()->addMonth(),
+            'quarterly' => $startsAt->copy()->addMonths(3),
+            'semiannual' => $startsAt->copy()->addMonths(6),
+            'annual' => $startsAt->copy()->addYear(),
+            'custom' => $startsAt->copy()->addDays((int) $data['license_custom_days']),
+        };
+
+        Setting::firstOrFail()->update($data + [
+            'plan_name' => $plan->name,
+            'license_expires_at' => $expiresAt,
+        ]);
+        return redirect()->route('onboarding.welcome')->with('success', 'Licencia actualizada correctamente.');
     }
 
     private function ensurePermission(Request $request, string $permission): void

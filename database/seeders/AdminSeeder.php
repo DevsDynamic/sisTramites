@@ -18,20 +18,23 @@ class AdminSeeder extends Seeder
             'admin@syvtechnology.com'
         );
 
-        $password = env('SYSTEM_OWNER_PASSWORD');
+        $user = User::where('email', $email)->first();
 
-        if (! $password) {
-            throw new \RuntimeException(
-                'Debe configurar SYSTEM_OWNER_PASSWORD.'
-            );
+        if (! $user) {
+            $password = env('SYSTEM_OWNER_PASSWORD');
+
+            if (! $password) {
+                throw new \RuntimeException(
+                    'Debe configurar SYSTEM_OWNER_PASSWORD en una instalación nueva.'
+                );
+            }
+
+            $user = User::create([
+                'name' => 'Admin',
+                'email' => $email,
+                'password' => bcrypt($password),
+            ]);
         }
-
-        $user = User::firstOrCreate([
-            'email' => $email,
-        ], [
-            'name' => 'Admin',
-            'password' => bcrypt($password),
-        ]);
 
         $user->update(['is_system_owner' => true]);
 

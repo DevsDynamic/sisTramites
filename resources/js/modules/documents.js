@@ -94,6 +94,7 @@ function initCreateForm() {
 
         form.addEventListener('submit', event => {
             event.preventDefault();
+            event.stopImmediatePropagation();
 
             ajaxFormSubmit(form, {
                 modalId,
@@ -101,7 +102,7 @@ function initCreateForm() {
                 redirect: false,
                 callback: response => onCreated(response.item),
             });
-        });
+        }, true);
     };
 
     bindQuickCreate('quickDocumentTypeForm', 'quickDocumentTypeModal', item => {
@@ -180,12 +181,27 @@ function initCreateForm() {
     const signatureMode = cleanForm.querySelector('#signature_mode');
     const signerField = cleanForm.querySelector('#signerField');
     const signer = cleanForm.querySelector('#signer_user_id');
+    const workflowTemplate = cleanForm.querySelector('#workflow_template_id');
+
+    const syncProcessMode = () => {
+        const hasWorkflow = Boolean(workflowTemplate?.value);
+        signatureMode.disabled = hasWorkflow;
+
+        if (hasWorkflow) {
+            signatureMode.value = 'none';
+            signerField?.classList.add('d-none');
+            if (signer) signer.value = '';
+        }
+    };
 
     signatureMode?.addEventListener('change', () => {
         const needsSigner = signatureMode.value === 'request';
         signerField?.classList.toggle('d-none', !needsSigner);
         if (!needsSigner && signer) signer.value = '';
     });
+
+    workflowTemplate?.addEventListener('change', syncProcessMode);
+    syncProcessMode();
 }
 
 // Ejecutar solo una vez

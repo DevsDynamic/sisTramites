@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Document;
-use App\Models\DocumentFlow;
+use App\Models\DocumentWorkflowStep;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -16,7 +16,7 @@ class DocumentAnalyticsController extends Controller
 
         $stats = [
             'total' => Document::count(),
-            'pending' => DocumentFlow::where('status', 'pending')->count(),
+            'pending' => DocumentWorkflowStep::where('status', 'active')->count(),
             'approved' => Document::where('status', 'approved')->count(),
             'rejected' => Document::where('status', 'rejected')->count(),
         ];
@@ -28,16 +28,17 @@ class DocumentAnalyticsController extends Controller
             ->get();
 
         // 🧑‍💼 carga por área
-        $byArea = DocumentFlow::selectRaw('to_area_id, COUNT(*) as total')
-            ->groupBy('to_area_id')
+        $byArea = DocumentWorkflowStep::with('responsibleArea:id,name')
+            ->selectRaw('responsible_area_id, COUNT(*) as total')
+            ->groupBy('responsible_area_id')
             ->get();
 
         // ⏱ promedio de atención (simple)
-        $avgTime = DocumentFlow::whereNotNull('received_at')
+        $avgTime = DocumentWorkflowStep::whereNotNull('acted_at')
             ->get()
-            ->avg(function ($flow) {
-                return Carbon::parse($flow->sent_at)
-                    ->diffInHours($flow->received_at);
+            ->avg(function ($step) {
+                return Carbon::parse($step->created_at)
+                    ->diffInHours($step->acted_at);
             });
 
         return view('analytics.index', compact(

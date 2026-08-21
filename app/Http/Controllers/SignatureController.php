@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Services\PlanLimitService;
 
 class SignatureController extends Controller
 {
@@ -36,9 +37,10 @@ class SignatureController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PlanLimitService $planLimits)
     {
         $this->ensurePermission($request, 'signature.create');
+        $planLimits->ensureAvailable('signatures');
 
         $this->setOwner($request);
 
@@ -51,10 +53,10 @@ class SignatureController extends Controller
             'user_id' => $data['user_id'],
             'type' => $data['type'],
             'pfx_path' => $this->storePfx($request),
+            'pfx_disk' => 'local',
             'signature_image' => $this->storeSignatureImage($request),
-            'pfx_password' => $request->filled('pfx_password')
-                ? encrypt($request->pfx_password)
-                : null,
+            'signature_image_disk' => 'local',
+            'pfx_password' => $this->rememberedPassword($request),
             'certificate_data' => $certificateData,
             'is_default' => $request->boolean('is_default'),
             'active' => $request->boolean('active'),
@@ -79,13 +81,15 @@ class SignatureController extends Controller
         if ($request->hasFile('pfx_file')) {
             $certificateData = $this->readCertificateData($request);
 
-            $this->deleteFile($signature->pfx_path);
+            $this->deleteFile($signature->pfx_path, $signature->pfx_disk);
             $signature->pfx_path = $this->storePfx($request);
+            $signature->pfx_disk = 'local';
         }
 
         if ($request->hasFile('signature_image')) {
-            $this->deleteFile($signature->signature_image);
+            $this->deleteFile($signature->signature_image, $signature->signature_image_disk);
             $signature->signature_image = $this->storeSignatureImage($request);
+            $signature->signature_image_disk = 'local';
         }
 
         $this->clearDefaultSignature($request, $signature);
@@ -93,9 +97,7 @@ class SignatureController extends Controller
         $signature->update([
             'user_id' => $data['user_id'],
             'type' => $data['type'],
-            'pfx_password' => $request->filled('pfx_password')
-                ? encrypt($request->pfx_password)
-                : $signature->pfx_password,
+            'pfx_password' => $this->rememberedPassword($request, $signature),
             'certificate_data' => $certificateData,
             'is_default' => $request->boolean('is_default'),
             'active' => $request->boolean('active'),
@@ -118,8 +120,8 @@ class SignatureController extends Controller
             ], 422);
         }
 
-        $this->deleteFile($signature->pfx_path);
-        $this->deleteFile($signature->signature_image);
+        $this->deleteFile($signature->pfx_path, $signature->pfx_disk);
+        $this->deleteFile($signature->signature_image, $signature->signature_image_disk);
 
         $signature->delete();
 
@@ -142,6 +144,18 @@ class SignatureController extends Controller
             'success' => true,
             'message' => 'Estado de la firma actualizado correctamente.',
         ]);
+    }
+
+    public function image(Request $request, Signature $signature)
+    {
+        $this->ensureOwnership($request, $signature);
+
+        abort_unless($signature->signature_image, 404);
+
+        $disk = $signature->signature_image_disk ?: 'local';
+        abort_unless(Storage::disk($disk)->exists($signature->signature_image), 404);
+
+        return response()->file(Storage::disk($disk)->path($signature->signature_image));
     }
 
     private function getItems(Request $request)
@@ -188,7 +202,7 @@ class SignatureController extends Controller
                     });
 
                     if ($signatureId) {
-                        $q->orWhereKey($signatureId);
+                        $q->orWhere('id', $signatureId);
                     }
 
                     if ($types) {
@@ -249,6 +263,7 @@ class SignatureController extends Controller
             'pfx_file' => ['nullable', 'file', 'max:5120'],
             'signature_image' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:2048'],
             'pfx_password' => ['nullable', 'string'],
+            'remember_certificate_password' => ['nullable', 'boolean'],
             'active' => ['nullable', 'boolean'],
         ]);
 
@@ -315,24 +330,37 @@ class SignatureController extends Controller
         );
     }
 
+    private function rememberedPassword(Request $request, ?Signature $signature = null): ?string
+    {
+        if (! $request->boolean('remember_certificate_password')) {
+            return null;
+        }
+
+        if ($request->filled('pfx_password')) {
+            return encrypt($request->string('pfx_password')->toString());
+        }
+
+        return $signature?->pfx_password;
+    }
+
     private function storePfx(Request $request): ?string
     {
         return $request->hasFile('pfx_file')
-            ? $request->file('pfx_file')->store('signatures/pfx', 'public')
+            ? $request->file('pfx_file')->store('signatures/pfx', 'local')
             : null;
     }
 
     private function storeSignatureImage(Request $request): ?string
     {
         return $request->hasFile('signature_image')
-            ? $request->file('signature_image')->store('signatures/images', 'public')
+            ? $request->file('signature_image')->store('signatures/images', 'local')
             : null;
     }
 
-    private function deleteFile(?string $path): void
+    private function deleteFile(?string $path, ?string $disk = 'local'): void
     {
         if ($path) {
-            Storage::disk('public')->delete($path);
+            Storage::disk($disk ?: 'local')->delete($path);
         }
     }
 
@@ -358,7 +386,8 @@ class SignatureController extends Controller
 
     private function canManageAll(Request $request): bool
     {
-        return $request->user()->can('signature.manage-all');
+        return $request->user()->isSystemOwner()
+            || $request->user()->can('signature.manage-all');
     }
 
     private function ensurePermission(Request $request, string $permission): void

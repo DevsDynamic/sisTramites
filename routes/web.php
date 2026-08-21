@@ -5,20 +5,27 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentAnalyticsController;
 use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\DocumentFlowController;
-use App\Http\Controllers\DocumentInboxController;
 use App\Http\Controllers\DocumentReportController;
 use App\Http\Controllers\DocumentSeriesController;
 use App\Http\Controllers\DocumentTypeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SignatureController;
-use App\Http\Controllers\SlaController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\WorkflowRuleController;
+use App\Http\Controllers\WorkflowTemplateController;
+use App\Http\Controllers\WorkflowInboxController;
 
 require __DIR__ . '/auth.php';
+
+Route::middleware('auth')->controller(ProfileController::class)->group(function () {
+    Route::get('/profile', 'edit')->name('profile.edit');
+    Route::patch('/profile', 'update')->name('profile.update');
+    Route::put('/profile/password', 'updatePassword')->name('profile.password.update');
+    Route::get('/profile/avatar', 'avatar')->name('profile.avatar');
+});
 
 Route::get('/', function () {
 
@@ -46,6 +53,8 @@ Route::middleware('auth')
             ->name('branding.store');
         Route::get('/completed', 'completed')
             ->name('completed');
+        Route::get('/license', 'license')->name('license');
+        Route::post('/license', 'licenseStore')->name('license.store');
     });
 
 Route::middleware([
@@ -65,6 +74,7 @@ Route::middleware([
     Route::get('/users/cards', [UserController::class, 'cards'])->name('users.cards');
     Route::patch('/users/{user}/active', [UserController::class, 'active'])->name('users.active');
     Route::resource('roles', RoleController::class)->except(['create', 'edit', 'show']);
+    Route::resource('plans', PlanController::class)->except(['show', 'destroy']);
     Route::get('/roles/cards', [RoleController::class, 'cards'])->name('roles.cards');
 
     /* CONFIGURACIÓN DOCUMENTAL */
@@ -79,20 +89,14 @@ Route::middleware([
     Route::get('/document-series/cards', [DocumentSeriesController::class, 'cards'])->name('document-series.cards');
 
     Route::resource('signatures', SignatureController::class)->except(['create', 'edit', 'show']);
+    Route::get('/signatures/{signature}/image', [SignatureController::class, 'image'])->name('signatures.image');
     Route::get('/signatures/cards', [SignatureController::class, 'cards'])->name('signatures.cards');
     Route::patch('/signatures/{signature}/active', [SignatureController::class, 'active'])->name('signatures.active');
 
-    /* BANDEJAS */
-    Route::controller(DocumentInboxController::class)
-        ->prefix('documents')
-        ->name('documents.')
-        ->group(function () {
-            Route::get('inbox', 'index')->name('inbox');
-            Route::get('outbox', 'outbox')->name('outbox');
-            Route::get('tracking', 'tracking')->name('tracking');
-            Route::get('archived', 'archived')->name('archived');
-            Route::get('search', 'search')->name('search');
-        });
+    Route::resource('workflow-templates', WorkflowTemplateController::class)
+        ->only(['index', 'store', 'update']);
+    Route::get('/workflow-inbox', [WorkflowInboxController::class, 'index'])->name('workflow-inbox.index');
+    Route::post('/workflow-inbox/{step}/complete', [WorkflowInboxController::class, 'complete'])->name('workflow-inbox.complete');
 
     /* DOCUMENTOS */
     Route::prefix('documents')
@@ -109,6 +113,8 @@ Route::middleware([
                 ->name('series-preview');
             Route::get('/cards', 'cards')
                 ->name('cards');
+            Route::get('/{document}/attachments/{attachment}/file', 'attachmentFile')
+                ->name('attachments.file');
             Route::get('/{document}/edit', 'edit')
                 ->name('edit');
             Route::put('/{document}', 'update')
@@ -119,30 +125,6 @@ Route::middleware([
                 ->name('destroy');
             Route::post('/{document}/sign', 'sign')
                 ->name('sign');
-        });
-
-    /* WORKFLOW */
-    Route::prefix('workflow')
-        ->name('workflow.')
-        ->controller(DocumentFlowController::class)
-        ->group(function () {
-            Route::get('flows', 'flows')
-                ->name('flows');
-            Route::get('sla', 'sla')
-                ->name('sla');
-            Route::get('rules', 'rules')
-                ->name('rules');
-            /* ACCIONES */
-            Route::post('{flow}/receive', 'receive')
-                ->name('receive');
-            Route::post('{flow}/approve', 'approve')
-                ->name('approve');
-            Route::post('{flow}/reject', 'reject')
-                ->name('reject');
-            Route::post('{flow}/observe', 'observe')
-                ->name('observe');
-            Route::post('{flow}/reassign', 'reassign')
-                ->name('reassign');
         });
 
     /* NOTIFICACIONES */
@@ -177,24 +159,4 @@ Route::middleware([
             )->name('documents');
         });
 
-
-    /* SLA */
-    Route::prefix('workflow')
-        ->name('workflow.')
-        ->controller(SlaController::class)
-        ->group(function () {
-
-            Route::get('sla', 'index')
-                ->name('sla');
-        });
-
-    /* RULES */
-    Route::prefix('workflow')
-        ->name('workflow.')
-        ->controller(WorkflowRuleController::class)
-        ->group(function () {
-
-            Route::get('rules', 'index')
-                ->name('rules');
-        });
 });

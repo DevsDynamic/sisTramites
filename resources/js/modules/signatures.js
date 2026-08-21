@@ -28,11 +28,12 @@ function initSignatureForm(prefix) {
     const visualFields = document.getElementById(`${prefix}_visualFields`);
     const pfxFile = document.getElementById(`${prefix}_pfx_file`);
     const pfxPassword = document.getElementById(`${prefix}_pfx_password`);
+    const rememberPassword = document.getElementById(`${prefix}_remember_certificate_password`);
     const image = document.getElementById(`${prefix}_signature_image`);
     const preview = document.getElementById(`${prefix}_signaturePreview`);
     let existingImageUrl = '';
 
-    if (!type || !officialFields || !visualFields || !pfxFile || !pfxPassword || !image || !preview) {
+    if (!type || !officialFields || !visualFields || !pfxFile || !pfxPassword || !rememberPassword || !image || !preview) {
         return;
     }
 
@@ -45,6 +46,7 @@ function initSignatureForm(prefix) {
         image.required = prefix === 'create' && !isOfficial;
         pfxFile.disabled = !isOfficial;
         pfxPassword.disabled = !isOfficial;
+        rememberPassword.disabled = !isOfficial;
         image.disabled = isOfficial;
 
         if (isOfficial) {
@@ -76,6 +78,8 @@ function initSignatureForm(prefix) {
         existingImageUrl = prefix === 'edit'
             ? event.relatedTarget?.dataset.signature_image_url ?? ''
             : '';
+        rememberPassword.checked = prefix === 'edit'
+            && event.relatedTarget?.dataset.certificate_password_remembered === '1';
 
         toggleType();
     });
@@ -88,4 +92,17 @@ function initSignatureForm(prefix) {
     });
 
     toggleType();
+
+    document.querySelectorAll('[data-password-toggle]').forEach(button => {
+        button.addEventListener('click', () => {
+            const input = document.querySelector(button.dataset.passwordToggle);
+
+            if (!input) return;
+
+            const visible = input.type === 'text';
+            input.type = visible ? 'password' : 'text';
+            button.querySelector('i')?.classList.toggle('ti-eye', visible);
+            button.querySelector('i')?.classList.toggle('ti-eye-off', !visible);
+        });
+    });
 }

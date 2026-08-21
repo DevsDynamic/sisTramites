@@ -42,7 +42,7 @@
                     </div>
 
                     <img
-                        src="{{ asset('storage/' . $signature->signature_image) }}"
+                        src="{{ route('signatures.image', $signature) }}"
                         alt="Firma visual de {{ $signature->user->name }}"
                         class="img-fluid"
                         style="max-height: 120px; object-fit: contain;"
@@ -139,8 +139,9 @@
                             'user_id' => $signature->user_id,
                             'type' => $signature->type,
                             'signature_image_url' => $signature->signature_image
-                                ? asset('storage/' . $signature->signature_image)
+                                ? route('signatures.image', $signature)
                                 : '',
+                            'certificate_password_remembered' => $signature->pfx_password ? '1' : '0',
                             'active' => $signature->active,
                         ]"
                     />

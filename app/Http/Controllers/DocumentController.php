@@ -19,6 +19,9 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use App\Enums\DocumentStatus;
 use App\Services\PdfSignatureService;
+use App\Services\WorkflowExecutionService;
+use App\Services\PlanLimitService;
+use App\Models\WorkflowTemplate;
 
 class DocumentController extends Controller
 {
@@ -52,9 +55,11 @@ class DocumentController extends Controller
 
         $areas = $this->availableAreas(auth()->user());
         $signers = User::active()
+            ->where('id', '!=', auth()->id())
             ->whereHas('signatures', fn($query) => $query->active())
             ->orderBy('name')
             ->get();
+        $workflowTemplates = WorkflowTemplate::active()->with(['documentType', 'originArea', 'steps'])->orderBy('name')->get();
 
         return view(
             'documents.create',
@@ -62,13 +67,15 @@ class DocumentController extends Controller
                 'types',
                 'areas',
                 'signers'
+                ,'workflowTemplates'
             )
         );
     }
 
-    public function store(Request $request, DocumentSeriesService $seriesService)
+    public function store(Request $request, DocumentSeriesService $seriesService, WorkflowExecutionService $workflowExecution, PlanLimitService $planLimits)
     {
         $this->ensurePermission($request, 'documents.create');
+        $planLimits->ensureAvailable('documents');
         $request->validate([
             'subject'          => ['required', 'max:255'],
             'content'          => ['nullable'],
@@ -77,10 +84,18 @@ class DocumentController extends Controller
             'file'             => ['required', 'file', 'mimes:pdf', 'max:51200'],
             'signature_mode' => ['nullable', 'in:none,self,request'],
             'signer_user_id' => ['nullable', 'required_if:signature_mode,request', 'exists:users,id'],
+            'workflow_template_id' => ['nullable', 'exists:workflow_templates,id'],
         ]);
+        $planLimits->ensureStorageAvailable((int) $request->file('file')->getSize());
 
         $user   = auth::user();
         $areaId = $request->area_id;
+
+        if ($request->filled('workflow_template_id') && $request->input('signature_mode', 'none') !== 'none') {
+            throw ValidationException::withMessages([
+                'signature_mode' => 'Use el flujo para asignar responsables; no combine un flujo con una solicitud puntual de firma.',
+            ]);
+        }
 
         abort_unless(
             $this->canManageAll($user) || $user->areas()->whereKey($areaId)->exists(),
@@ -108,13 +123,14 @@ class DocumentController extends Controller
             ]);
 
             $file = $request->file('file');
-            $path = $file->store('documents', 'public');
+            $path = $file->store('documents', 'local');
 
             DocumentAttachment::create([
                 'document_id'   => $document->id,
                 'file_name'     => $file->getClientOriginalName(),
                 'original_name' => $file->getClientOriginalName(),
                 'file_path'     => $path,
+                'storage_disk'  => 'local',
                 'file_type'     => $file->getMimeType(),
                 'mime_type'     => $file->getMimeType(),
                 'file_size'     => $file->getSize(), // ← columna corregida
@@ -130,6 +146,14 @@ class DocumentController extends Controller
                 'description' => 'Documento creado',
                 'user_id'     => $user->id,
             ]);
+
+            if ($request->filled('workflow_template_id')) {
+                $workflowExecution->start(
+                    $document,
+                    WorkflowTemplate::findOrFail($request->integer('workflow_template_id')),
+                    $user
+                );
+            }
 
             if ($request->input('signature_mode') === 'request') {
                 $canSign = Signature::active()
@@ -160,11 +184,22 @@ class DocumentController extends Controller
                 ]);
             }
 
+            if ($request->input('signature_mode') === 'self') {
+                DocumentStatusLog::create([
+                    'document_id' => $document->id,
+                    'action' => 'self_signature_selected',
+                    'description' => 'El creador preparó el documento para firmarlo personalmente.',
+                    'user_id' => $user->id,
+                ]);
+            }
+
             DB::commit();
 
             return response()->json([
                 'success'  => true,
-                'message' => 'Documento creado correctamente.',
+                'message' => $request->input('signature_mode') === 'self'
+                    ? 'Documento creado. Ahora selecciona la firma que deseas aplicar.'
+                    : 'Documento creado correctamente.',
                 'redirect' => route('documents.show', $document->id),
             ]);
         } catch (ValidationException $e) {
@@ -205,13 +240,14 @@ class DocumentController extends Controller
         ]);
     }
 
-    public function show($id)
+    public function show($id, WorkflowExecutionService $workflowExecution)
     {
         $document = Document::with([
             'type',
             'creator',
             'attachments',
             'signatureRequests.signer',
+            'workflow.steps',
             'statusLogs.user', // ← cargar historial
         ])->findOrFail($id);
 
@@ -219,12 +255,45 @@ class DocumentController extends Controller
         $this->ensureCanViewDocument($user, $document);
 
         // Solo mostrar firmas si el documento NO está firmado
+        $pendingSignatureRequest = $document->signatureRequests
+            ->first(fn ($signatureRequest) => $signatureRequest->signer_user_id === $user->id && $signatureRequest->status === 'pending');
+        $workflowSignatureStep = $document->workflow?->steps
+            ->first(fn ($step) => $step->status === 'active' && $step->action === 'signature');
+        $canSignWorkflowStep = $workflowSignatureStep
+            && $workflowExecution->userCanHandleStep($workflowSignatureStep, $user);
+        $canSign = $document->status !== DocumentStatus::SIGNED
+            && ($pendingSignatureRequest || $canSignWorkflowStep || (! $document->workflow && $document->created_by === $user->id));
+
         $signatures = collect();
-        if ($document->status !== DocumentStatus::SIGNED) {
+        if ($canSign) {
             $signatures = $user->signatures()->active()->get();
         }
 
-        return view('documents.show', compact('document', 'signatures'));
+        $padesConfigured = app(\App\Services\InternalPadesSigningService::class)->isConfigured();
+
+        return view('documents.show', compact('document', 'signatures', 'canSignWorkflowStep', 'padesConfigured'));
+    }
+
+    public function attachmentFile(Request $request, Document $document, DocumentAttachment $attachment)
+    {
+        abort_unless($attachment->document_id === $document->id, 404);
+
+        $this->ensureCanViewDocument($request->user(), $document);
+
+        $disk = $attachment->storage_disk ?: 'local';
+        abort_unless(Storage::disk($disk)->exists($attachment->file_path), 404);
+
+        if ($request->boolean('download')) {
+            return Storage::disk($disk)->download(
+                $attachment->file_path,
+                $attachment->original_name ?: $attachment->file_name
+            );
+        }
+
+        return response()->file(
+            Storage::disk($disk)->path($attachment->file_path),
+            ['Content-Type' => $attachment->mime_type ?: 'application/pdf']
+        );
     }
 
     public function edit(Request $request, Document $document)
@@ -271,12 +340,12 @@ class DocumentController extends Controller
 
         DB::transaction(function () use ($document) {
             $document->attachments()->each(function (DocumentAttachment $attachment) {
-                Storage::disk('public')->delete($attachment->file_path);
+                Storage::disk($attachment->storage_disk ?? 'local')->delete($attachment->file_path);
                 $attachment->delete();
             });
 
             $document->versions()->each(function ($version) {
-                Storage::disk('public')->delete($version->file_path);
+                Storage::disk('local')->delete($version->file_path);
                 $version->delete();
             });
 
@@ -292,7 +361,8 @@ class DocumentController extends Controller
     public function sign(
         Request $request,
         $id,
-        PdfSignatureService $pdfSigner
+        PdfSignatureService $pdfSigner,
+        WorkflowExecutionService $workflowExecution
     ) {
 
         $document = Document::findOrFail($id);
@@ -303,8 +373,15 @@ class DocumentController extends Controller
             ->orderBy('sequence')
             ->first();
 
+        $workflowSignatureStep = $document->workflow()
+            ->with('steps')
+            ->first()?->steps
+            ->first(fn ($step) => $step->status === 'active' && $step->action === 'signature');
+        $canSignWorkflowStep = $workflowSignatureStep
+            && $workflowExecution->userCanHandleStep($workflowSignatureStep, $request->user());
+
         abort_unless(
-            $document->created_by === auth()->id() || $signatureRequest,
+            $signatureRequest || $canSignWorkflowStep || (! $document->workflow && $document->created_by === auth()->id()),
             403
         );
 
@@ -323,19 +400,55 @@ class DocumentController extends Controller
                 'exists:signatures,id'
             ],
             'appearance_type' => ['nullable', 'in:signature,approval'],
-            'placement' => ['nullable', 'in:first,last,all'],
+            'placement' => ['nullable', 'in:first,last,all,specific'],
+            'page_number' => ['nullable', 'required_if:placement,specific', 'integer', 'min:1'],
             'orientation' => ['nullable', 'in:horizontal,vertical'],
+            'position_mode' => ['nullable', 'in:automatic,manual'],
+            'position_x' => ['nullable', 'required_if:position_mode,manual', 'numeric', 'between:0,1'],
+            'position_y' => ['nullable', 'required_if:position_mode,manual', 'numeric', 'between:0,1'],
+            'position_width' => ['nullable', 'required_if:position_mode,manual', 'numeric', 'between:0.05,1'],
+            'position_height' => ['nullable', 'required_if:position_mode,manual', 'numeric', 'between:0.05,1'],
         ]);
 
         $signatureOptions = [
             'appearance_type' => $request->input('appearance_type', 'signature'),
             'placement' => $request->input('placement', 'last'),
+            'page_number' => $request->integer('page_number') ?: null,
             'orientation' => $request->input('orientation', 'horizontal'),
+            'position_mode' => $request->input('position_mode', 'automatic'),
+            'position' => $request->input('position_mode') === 'manual' ? [
+                'x' => (float) $request->input('position_x'),
+                'y' => (float) $request->input('position_y'),
+                'width' => (float) $request->input('position_width'),
+                'height' => (float) $request->input('position_height'),
+            ] : null,
+            'slot' => 0,
         ];
+
+        if (app(\App\Services\LlamaTimestampService::class)->isConfigured()) {
+            $signatureOptions['timestamp_provider'] = 'Llama.pe TSA';
+        }
 
         DB::beginTransaction();
 
         try {
+
+            $document = Document::query()
+                ->whereKey($document->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $signatureOptions['slot'] = $document->attachments()
+                ->where('is_signed', true)
+                ->lockForUpdate()
+                ->get()
+                ->filter(fn (DocumentAttachment $attachment) => data_get($attachment->signature_options, 'placement', 'last') === $signatureOptions['placement'])
+                ->count();
+
+            if ($signatureRequest) {
+                $signatureRequest->refresh();
+                abort_unless($signatureRequest->status === 'pending', 422, 'Esta solicitud de firma ya fue atendida.');
+            }
 
             // $signature = Signature::findOrFail(
             //     $request->signature_id
@@ -347,15 +460,43 @@ class DocumentController extends Controller
                 ->where('active', true)
                 ->firstOrFail();
 
+            if ($canSignWorkflowStep && $signature->type !== 'official') {
+                throw ValidationException::withMessages([
+                    'signature_id' => 'La etapa del flujo requiere una firma digital oficial o un visto bueno digital.',
+                ]);
+            }
+
+            if ($signature->type === 'official'
+                && app(\App\Services\InternalPadesSigningService::class)->isConfigured()
+                && blank($signature->pfx_password)) {
+                $request->validate([
+                    'certificate_password' => ['required', 'string'],
+                ], [
+                    'certificate_password.required' => 'Ingrese la contraseña de su certificado para firmar.',
+                ]);
+            }
+
+            if (! app(\App\Services\InternalPadesSigningService::class)->isConfigured()
+                && $signature->type === 'official' && $document->attachments()
+                ->where('is_signed', true)
+                ->whereHas('signature', fn ($query) => $query->where('type', 'official'))
+                ->exists()) {
+                throw ValidationException::withMessages([
+                    'signature_id' => 'Este PDF ya tiene una firma oficial. Para conservar todas las firmas verificables, las firmas oficiales múltiples requieren firma PAdES incremental; no se reemplazará la firma existente.',
+                ]);
+            }
+
             $attachment = $document->attachments()
                 ->whereIn('kind', ['primary', 'signed_copy'])
+                ->lockForUpdate()
                 ->latest('id')
                 ->firstOrFail();
 
             $signedPath = $pdfSigner->sign(
                 $attachment,
                 $signature,
-                $signatureOptions
+                $signatureOptions,
+                $request->input('certificate_password')
             );
 
             $signedAttachment = DocumentAttachment::create([
@@ -374,12 +515,13 @@ class DocumentController extends Controller
                     $attachment->original_name,
 
                 'file_path' => $signedPath,
+                'storage_disk' => 'local',
 
                 'file_type' => 'application/pdf',
 
                 'mime_type' => 'application/pdf',
 
-                'file_size' => Storage::disk('public')
+                'file_size' => Storage::disk('local')
                     ->size($signedPath),
 
                 'is_signed' => true,
@@ -398,15 +540,20 @@ class DocumentController extends Controller
                 ]);
             }
 
-            $hasPendingRequests = $document->signatureRequests()
-                ->where('status', 'pending')
-                ->exists();
-
-            $document->update([
-                'status' => $hasPendingRequests
-                    ? DocumentStatus::PENDING
-                    : DocumentStatus::SIGNED,
-            ]);
+            if ($canSignWorkflowStep) {
+                $workflowExecution->completeStep(
+                    $workflowSignatureStep,
+                    $request->user(),
+                    $signatureOptions['appearance_type'] === 'approval' ? 'Visto bueno digital aplicado.' : 'Firma digital aplicada.'
+                );
+            } else {
+                $hasPendingRequests = $document->signatureRequests()
+                    ->where('status', 'pending')
+                    ->exists();
+                $document->update([
+                    'status' => $hasPendingRequests ? DocumentStatus::PENDING : DocumentStatus::SIGNED,
+                ]);
+            }
 
             DocumentStatusLog::create([
 
@@ -417,7 +564,10 @@ class DocumentController extends Controller
                 'description' =>
                 ($signatureOptions['appearance_type'] === 'approval'
                     ? 'Visto bueno digital aplicado con '
-                    : 'Documento firmado con ') . $this->signatureTypeLabel($signature),
+                    : 'Documento firmado con ') . $this->signatureTypeLabel($signature)
+                    . (isset($signatureOptions['timestamp_provider'])
+                        ? ' y sello de tiempo Llama.pe.'
+                        : '.'),
 
                 'user_id' => auth()->id(),
             ]);
@@ -510,7 +660,7 @@ class DocumentController extends Controller
         return $query->where(function ($documentQuery) use ($user, $areaIds) {
             $documentQuery->where('created_by', $user->id)
                 ->when($areaIds->isNotEmpty(), function ($query) use ($areaIds) {
-                    $query->orWhereHas('flows', fn($flowQuery) => $flowQuery->whereIn('to_area_id', $areaIds));
+                    $query->orWhereHas('workflow.steps', fn($stepQuery) => $stepQuery->whereIn('responsible_area_id', $areaIds));
                 });
         });
     }
@@ -536,8 +686,8 @@ class DocumentController extends Controller
         }
 
         $belongsToUser = $document->created_by === $user->id;
-        $belongsToArea = $user->areas()
-            ->whereHas('incomingFlows', fn($query) => $query->where('document_id', $document->id))
+        $belongsToArea = $document->workflow()
+            ->whereHas('steps', fn($query) => $query->whereIn('responsible_area_id', $user->areas()->pluck('areas.id')))
             ->exists();
 
         $hasSignatureRequest = $document->signatureRequests()

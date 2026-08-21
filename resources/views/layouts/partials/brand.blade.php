@@ -8,6 +8,6 @@
         @endif
     </div>
     <div class="sidebar-plan">
-        Plan SaaS
+        {{ setting()?->plan?->name ?? setting()?->plan_name ?? 'Plan SaaS' }}
     </div>
 </div>

@@ -5,8 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -28,6 +29,19 @@ class ProfileController extends Controller
     {
         $request->user()->fill($request->validated());
 
+        $request->validate([
+            'avatar' => ['nullable', 'image', 'max:2048'],
+        ]);
+
+        if ($request->hasFile('avatar')) {
+            if ($request->user()->avatar_path) {
+                Storage::disk('local')->delete($request->user()->avatar_path);
+            }
+
+            $request->user()->avatar_path = $request->file('avatar')
+                ->store('avatars/' . $request->user()->id, 'local');
+        }
+
         if ($request->user()->isDirty('email')) {
             $request->user()->email_verified_at = null;
         }
@@ -37,24 +51,25 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
+    public function updatePassword(Request $request): RedirectResponse
     {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
+        $data = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', 'confirmed', Password::min(8)],
         ]);
 
-        $user = $request->user();
+        $request->user()->update(['password' => $data['password']]);
 
-        Auth::logout();
-
-        $user->delete();
-
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
+        return Redirect::route('profile.edit')->with('status', 'password-updated');
     }
+
+    public function avatar(Request $request)
+    {
+        $path = $request->user()->avatar_path;
+
+        abort_unless($path && Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path);
+    }
+
 }

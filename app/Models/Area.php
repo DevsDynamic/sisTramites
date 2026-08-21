@@ -32,21 +32,6 @@ class Area extends Model
         return $this->hasMany(Document::class);
     }
 
-    public function outgoingFlows()
-    {
-        return $this->hasMany(DocumentFlow::class, 'from_area_id');
-    }
-
-    public function incomingFlows()
-    {
-        return $this->hasMany(DocumentFlow::class, 'to_area_id');
-    }
-
-    public function workflowPermissions()
-    {
-        return $this->hasMany(WorkflowPermission::class);
-    }
-
     public function scopeActive($query)
     {
         return $query->where('active', true);
@@ -57,11 +42,13 @@ class Area extends Model
         return ! $this->users()->exists()
             && ! $this->documentSeries()->exists()
             && ! $this->documents()->exists()
-            && ! $this->outgoingFlows()->exists()
-            && ! $this->incomingFlows()->exists()
-            && ! $this->workflowPermissions()->exists();
+            && ! $this->documentWorkflowSteps()->exists();
     }
 
+    public function documentWorkflowSteps()
+    {
+        return $this->hasMany(DocumentWorkflowStep::class, 'responsible_area_id');
+    }
     public function canDeactivate(): bool
     {
         return $this->active;

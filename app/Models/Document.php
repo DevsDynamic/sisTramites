@@ -43,11 +43,6 @@ class Document extends Model
             'created_by'
         );
     }
-    public function flows()
-    {
-        return $this->hasMany(DocumentFlow::class);
-    }
-
     public function attachments()
     {
         return $this->hasMany(DocumentAttachment::class);
@@ -76,10 +71,15 @@ class Document extends Model
         return $this->hasMany(DocumentSignatureRequest::class)->orderBy('sequence');
     }
 
+    public function workflow()
+    {
+        return $this->hasOne(DocumentWorkflow::class);
+    }
+
     public function canEdit(): bool
     {
         return $this->status === DocumentStatus::DRAFT
-            && ! $this->flows()->exists()
+            && ! $this->workflow()->exists()
             && ! $this->attachments()->where('is_signed', true)->exists();
     }
 

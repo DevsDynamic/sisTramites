@@ -41,6 +41,13 @@
     </div>
 @endcan
 
+@can('flows.view')
+    <a href="{{ route('workflow-inbox.index') }}" class="nav-link menu-item {{ request()->routeIs('workflow-inbox.*') ? 'active' : '' }}">
+        <i class="ti ti-inbox"></i>
+        <span>Mi bandeja</span>
+    </a>
+@endcan
+
 <div class="menu-section">
     <small class="text-uppercase menu-label">Configuración documental</small>
 </div>
@@ -63,6 +70,13 @@
     <a href="{{ route('signatures.index') }}" class="nav-link menu-item {{ request()->routeIs('signatures.*') ? 'active' : '' }}">
         <i class="ti ti-signature"></i>
         <span>Firmas digitales</span>
+    </a>
+@endcan
+
+@can('flows.view')
+    <a href="{{ route('workflow-templates.index') }}" class="nav-link menu-item {{ request()->routeIs('workflow-templates.*') ? 'active' : '' }}">
+        <i class="ti ti-route"></i>
+        <span>Flujos de aprobaci&oacute;n</span>
     </a>
 @endcan
 

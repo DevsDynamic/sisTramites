@@ -15,6 +15,7 @@ class DocumentAttachment extends Model
         'file_name',
         'original_name',
         'file_path',
+        'storage_disk',
         'file_type',
         'mime_type',
         'file_size',

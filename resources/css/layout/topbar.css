@@ -101,3 +101,37 @@
     gap: 16px;
 
 }
+
+.topbar-profile-toggle {
+    height: 42px;
+    padding: 0 8px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    transition: background .2s ease, border-color .2s ease;
+}
+
+.topbar-profile-toggle:hover,
+.topbar-profile-toggle[aria-expanded="true"] {
+    background: var(--hover-bg);
+    border-color: var(--border-color);
+}
+
+.topbar-profile-menu {
+    min-width: 250px;
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, .12);
+    overflow: hidden;
+}
+
+.topbar-profile-identity {
+    padding: 12px 14px;
+}
+
+.topbar-profile-menu .dropdown-item {
+    padding: 10px 14px;
+}

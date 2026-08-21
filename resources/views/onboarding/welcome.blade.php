@@ -67,6 +67,14 @@
                     </a>
                 </x-slot:footer>
             </x-crud.card>
+
+            @if(auth()->user()->isSystemOwner())
+                <x-crud.card :stretch="false">
+                    <x-slot:header><x-crud.card-header title="Licencia y plan" subtitle="Control de la instalación"><x-slot:badge><span class="badge bg-orange-lt"><i class="ti ti-key me-1"></i>Propietario</span></x-slot:badge></x-crud.card-header></x-slot:header>
+                    <div><div class="fw-semibold">{{ $settings->plan?->name ?? $settings->plan_name }}</div><div class="text-secondary small">{{ $settings->license_expires_at ? 'Vence: ' . $settings->license_expires_at->format('d/m/Y') : 'Sin vencimiento configurado' }}</div></div>
+                    <x-slot:footer><a href="{{ route('onboarding.license') }}" class="btn btn-primary"><i class="ti ti-pencil me-1"></i>Administrar licencia</a></x-slot:footer>
+                </x-crud.card>
+            @endif
         </div>
     </x-crud.index>
 @endsection

@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'internal_signer' => [
+        'url' => env('INTERNAL_SIGNER_URL'),
+        'token' => env('INTERNAL_SIGNER_TOKEN'),
+        'timeout' => env('INTERNAL_SIGNER_TIMEOUT', 120),
+    ],
+
+    'llama_timestamp' => [
+        'route' => env('LLAMA_TIMESTAMP_ROUTE'),
+        'token' => env('LLAMA_TIMESTAMP_TOKEN'),
+        'timeout' => env('LLAMA_TIMESTAMP_TIMEOUT', 120),
+    ],
+
 ];

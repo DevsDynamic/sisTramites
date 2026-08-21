@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\DocumentStatus;
 use App\Models\Area;
 use App\Models\Document;
-use App\Models\DocumentFlow;
+use App\Models\DocumentWorkflowStep;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -53,15 +53,15 @@ class DashboardController extends Controller
 
         $stats = [
             'documents' => (clone $documents)->count(),
-            'pending' => (clone $flows)->where('status', 'pending')->count(),
+            'pending' => (clone $flows)->where('status', 'active')->count(),
             'signed' => (clone $documents)->where('status', DocumentStatus::SIGNED->value)->count(),
             'overdue' => (clone $flows)
                 ->where(function ($query) {
-                    $query->where('sla_expired', true)
+                    $query->whereNotNull('overdue_at')
                         ->orWhere(function ($deadlineQuery) {
-                            $deadlineQuery->whereNotNull('sla_deadline')
-                                ->where('sla_deadline', '<', now())
-                                ->whereNotIn('status', ['approved', 'rejected']);
+                            $deadlineQuery->whereNotNull('due_at')
+                                ->where('due_at', '<', now())
+                                ->where('status', 'active');
                         });
                 })
                 ->count(),
@@ -84,8 +84,8 @@ class DashboardController extends Controller
             ->get();
 
         $inbox = (clone $flows)
-            ->with(['document.type', 'document.creator'])
-            ->whereIn('status', ['pending', 'received', 'observed'])
+            ->with(['workflow.document.type', 'workflow.document.creator'])
+            ->where('status', 'active')
             ->latest('id')
             ->take(5)
             ->get();
@@ -117,8 +117,8 @@ class DashboardController extends Controller
         return $query->where(function (Builder $builder) use ($user, $areaIds) {
             $builder->where('created_by', $user->id)
                 ->when($areaIds->isNotEmpty(), function (Builder $documentQuery) use ($areaIds) {
-                    $documentQuery->orWhereHas('flows', function (Builder $flowQuery) use ($areaIds) {
-                        $flowQuery->whereIn('to_area_id', $areaIds);
+                    $documentQuery->orWhereHas('workflow.steps', function (Builder $stepQuery) use ($areaIds) {
+                        $stepQuery->whereIn('responsible_area_id', $areaIds);
                     });
                 });
         });
@@ -126,22 +126,20 @@ class DashboardController extends Controller
 
     private function flowScope(User $user, bool $canViewAll, ?int $areaId): Builder
     {
-        $query = DocumentFlow::query();
+        $query = DocumentWorkflowStep::query();
 
         if ($canViewAll) {
             return $query->when($areaId, function (Builder $builder) use ($areaId) {
-                $builder->where(function (Builder $flowQuery) use ($areaId) {
-                    $flowQuery->where('from_area_id', $areaId)
-                        ->orWhere('to_area_id', $areaId);
-                });
+                $builder->whereHas('workflow.document', fn (Builder $documentQuery) => $documentQuery->where('area_id', $areaId))
+                    ->orWhere('responsible_area_id', $areaId);
             });
         }
 
         $areaIds = $user->areas()->pluck('areas.id');
 
         return $query->where(function (Builder $builder) use ($user, $areaIds) {
-            $builder->where('sent_by', $user->id)
-                ->when($areaIds->isNotEmpty(), fn(Builder $flowQuery) => $flowQuery->orWhereIn('to_area_id', $areaIds));
+            $builder->whereHas('workflow.document', fn (Builder $documentQuery) => $documentQuery->where('created_by', $user->id))
+                ->when($areaIds->isNotEmpty(), fn(Builder $stepQuery) => $stepQuery->orWhereIn('responsible_area_id', $areaIds));
         });
     }
 

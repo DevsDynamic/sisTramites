@@ -14,7 +14,8 @@ class PdfSignatureService
     public function sign(
         DocumentAttachment $attachment,
         Signature $signature,
-        array $options = []
+        array $options = [],
+        ?string $certificatePassword = null,
     ): string {
 
         $options = $this->normalizeOptions($options);
@@ -30,7 +31,8 @@ class PdfSignatureService
             'official' => $this->signOfficial(
                 $attachment,
                 $signature,
-                $options
+                $options,
+                $certificatePassword
             ),
 
             default => throw new \Exception(
@@ -50,15 +52,11 @@ class PdfSignatureService
         array $options
     ): string {
 
-        $pdfPath = storage_path(
-            'app/public/' .
-                $attachment->file_path
-        );
+        $pdfPath = Storage::disk($attachment->storage_disk ?: 'local')
+            ->path($attachment->file_path);
 
-        $imagePath = storage_path(
-            'app/public/' .
-                $signature->signature_image
-        );
+        $imagePath = Storage::disk($signature->signature_image_disk ?: 'local')
+            ->path($signature->signature_image);
 
         $pdf = new Fpdi();
 
@@ -88,7 +86,7 @@ class PdfSignatureService
                 $size['height']
             );
 
-            if ($this->mustShowAppearance($page, $pages, $options['placement'])) {
+            if ($this->mustShowAppearance($page, $pages, $options['placement'], $options['page_number'])) {
                 $this->drawVisualAppearance($pdf, $imagePath, $size, $options);
             }
         }
@@ -102,13 +100,8 @@ class PdfSignatureService
             'documents/signed/' .
             $signedName;
 
-        $pdf->Output(
-            storage_path(
-                'app/public/' .
-                    $signedPath
-            ),
-            'F'
-        );
+        Storage::disk('local')->makeDirectory('documents/signed');
+        $pdf->Output(Storage::disk('local')->path($signedPath), 'F');
 
         return $signedPath;
     }
@@ -235,8 +228,15 @@ class PdfSignatureService
     private function signOfficial(
         DocumentAttachment $attachment,
         Signature $signature,
-        array $options
+        array $options,
+        ?string $certificatePassword = null,
     ): string {
+
+        $internalSigner = app(InternalPadesSigningService::class);
+
+        if ($internalSigner->isConfigured()) {
+            return $internalSigner->sign($attachment, $signature, $options, $certificatePassword);
+        }
 
         $validTo = data_get(
             $signature->certificate_data,
@@ -250,19 +250,15 @@ class PdfSignatureService
             );
         }
 
-        $pdfPath = storage_path(
-            'app/public/' .
-                $attachment->file_path
-        );
+        $pdfPath = Storage::disk($attachment->storage_disk ?: 'local')
+            ->path($attachment->file_path);
 
-        $pfxPath = storage_path(
-            'app/public/' .
-                $signature->pfx_path
-        );
+        $pfxPath = Storage::disk($signature->pfx_disk ?: 'local')
+            ->path($signature->pfx_path);
 
-        $password = decrypt(
-            $signature->pfx_password
-        );
+        $password = $certificatePassword ?: ($signature->pfx_password
+            ? decrypt($signature->pfx_password)
+            : throw new \RuntimeException('Ingrese la contraseña del certificado para firmar.'));
 
         $certs = [];
 
@@ -321,7 +317,14 @@ class PdfSignatureService
             $pdfPath
         );
 
-        $signaturePage = $options['placement'] === 'first' ? 1 : $pages;
+        $signaturePage = match ($options['placement']) {
+            'first' => 1,
+            'specific' => $options['page_number'],
+            default => $pages,
+        };
+        if ($signaturePage < 1 || $signaturePage > $pages) {
+            throw new \Exception('La página seleccionada no existe en el documento.');
+        }
         $signatureSize = null;
 
         for (
@@ -354,7 +357,7 @@ class PdfSignatureService
                 $size['height']
             );
 
-            if ($this->mustShowAppearance($page, $pages, $options['placement'])) {
+            if ($this->mustShowAppearance($page, $pages, $options['placement'], $options['page_number'])) {
                 $this->drawOfficialAppearance($pdf, $size, $signature, $options);
             }
         }
@@ -363,7 +366,7 @@ class PdfSignatureService
          * Apariencia visual
          */
 
-        $geometry = $this->appearanceGeometry($signatureSize, $options['orientation']);
+        $geometry = $this->appearanceGeometry($signatureSize, $options['orientation'], $options['slot']);
 
         $pdf->setPage($signaturePage);
 
@@ -383,13 +386,8 @@ class PdfSignatureService
             'documents/signed/' .
             $signedName;
 
-        $pdf->Output(
-            storage_path(
-                'app/public/' .
-                    $signedPath
-            ),
-            'F'
-        );
+        Storage::disk('local')->makeDirectory('documents/signed');
+        $pdf->Output(Storage::disk('local')->path($signedPath), 'F');
 
         return $signedPath;
     }
@@ -400,32 +398,45 @@ class PdfSignatureService
             'appearance_type' => in_array($options['appearance_type'] ?? null, ['signature', 'approval'], true)
                 ? $options['appearance_type']
                 : 'signature',
-            'placement' => in_array($options['placement'] ?? null, ['first', 'last', 'all'], true)
+            'placement' => in_array($options['placement'] ?? null, ['first', 'last', 'all', 'specific'], true)
                 ? $options['placement']
                 : 'last',
+            'page_number' => isset($options['page_number']) ? max(1, (int) $options['page_number']) : null,
             'orientation' => in_array($options['orientation'] ?? null, ['horizontal', 'vertical'], true)
                 ? $options['orientation']
                 : 'horizontal',
+            'position_mode' => in_array($options['position_mode'] ?? null, ['automatic', 'manual'], true)
+                ? $options['position_mode']
+                : 'automatic',
+            'position' => is_array($options['position'] ?? null) ? $options['position'] : null,
+            'slot' => max(0, (int) ($options['slot'] ?? 0)),
         ];
     }
 
-    private function mustShowAppearance(int $page, int $totalPages, string $placement): bool
+    private function mustShowAppearance(int $page, int $totalPages, string $placement, ?int $pageNumber = null): bool
     {
         return match ($placement) {
             'first' => $page === 1,
             'all' => true,
+            'specific' => $page === $pageNumber,
             default => $page === $totalPages,
         };
     }
 
-    private function appearanceGeometry(array $size, string $orientation): array
+    private function appearanceGeometry(array $size, string $orientation, int $slot = 0): array
     {
         $width = $orientation === 'vertical' ? 34 : 62;
         $height = $orientation === 'vertical' ? 42 : 28;
+        $column = $slot % 2;
+        $row = intdiv($slot, 2);
+
+        // Alterna derecha/izquierda y asciende por filas para que cada sello visible tenga espacio propio.
+        $x = $column === 0 ? $size['width'] - $width - 8 : 8;
+        $y = $size['height'] - $height - 8 - ($row * ($height + 4));
 
         return [
-            'x' => $size['width'] - $width - 8,
-            'y' => $size['height'] - $height - 8,
+            'x' => $x,
+            'y' => max(8, $y),
             'width' => $width,
             'height' => $height,
         ];
@@ -437,7 +448,7 @@ class PdfSignatureService
             return;
         }
 
-        $geometry = $this->appearanceGeometry($size, $options['orientation']);
+        $geometry = $this->appearanceGeometry($size, $options['orientation'], $options['slot']);
 
         $pdf->Image(
             $imagePath,
@@ -450,13 +461,22 @@ class PdfSignatureService
 
     private function drawOfficialAppearance(Fpdi $pdf, array $size, Signature $signature, array $options): void
     {
-        $geometry = $this->appearanceGeometry($size, $options['orientation']);
+        $geometry = $this->appearanceGeometry($size, $options['orientation'], $options['slot']);
         $signerName = (string) data_get(
             $signature->certificate_data,
             'subject.CN',
             'Titular del certificado'
         );
         $documentNumber = data_get($signature->certificate_data, 'subject.serialNumber');
+
+        if (preg_match('/\bDNI\s*:\s*([A-Z0-9-]+)/iu', $signerName, $matches)) {
+            $documentNumber ??= $matches[1];
+            $signerName = trim(preg_replace('/\s*DNI\s*:\s*[A-Z0-9-]+/iu', '', $signerName));
+        }
+
+        $documentNumber = $documentNumber
+            ? preg_replace('/^DNI\s*:\s*/iu', '', (string) $documentNumber)
+            : null;
         $label = $options['appearance_type'] === 'approval'
             ? 'VISTO BUENO DIGITAL (VB)'
             : 'FIRMADO DIGITALMENTE';
@@ -477,7 +497,7 @@ class PdfSignatureService
             $geometry['width'] - 6,
             4,
             $label . "\n" . $signerName .
-                ($documentNumber ? "\nDocumento: " . $documentNumber : ''),
+                ($documentNumber ? "\nDNI: " . $documentNumber : ''),
             0,
             'L'
         );

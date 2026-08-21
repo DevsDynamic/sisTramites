@@ -48,7 +48,19 @@
 
         <div class="mb-3">
             <label class="form-label">Contraseña del certificado</label>
-            <input type="password" name="pfx_password" id="{{ $prefix }}_pfx_password" class="form-control" autocomplete="new-password">
+            <div class="input-group">
+                <input type="password" name="pfx_password" id="{{ $prefix }}_pfx_password" class="form-control" autocomplete="new-password">
+                <button class="btn btn-outline-secondary" type="button" data-password-toggle="#{{ $prefix }}_pfx_password" aria-label="Mostrar contraseña">
+                    <i class="ti ti-eye"></i>
+                </button>
+            </div>
+            <label class="form-check mt-2">
+                <input type="checkbox" name="remember_certificate_password" id="{{ $prefix }}_remember_certificate_password" class="form-check-input">
+                <span class="form-check-label">Recordar la contraseña para firmar</span>
+            </label>
+            <div class="form-hint">
+                Es opcional. Se cifra en el servidor y nunca se muestra; desmárcalo al editar para eliminarla.
+            </div>
         </div>
     </div>
 

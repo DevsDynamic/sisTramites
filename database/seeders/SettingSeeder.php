@@ -10,8 +10,8 @@ class SettingSeeder extends Seeder
 {
     public function run(): void
     {
-        Setting::create([
-            'company_name' => 'Sistema Trámites',
+        Setting::query()->firstOrCreate([], [
+            'company_name' => 'Empresa cliente',
             'primary_color' => '#0d6efd',
             'sidebar_color' => '#1e293b',
             'sidebar_text_color' => '#ffffff',

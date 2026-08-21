@@ -28,9 +28,9 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    Asunto
+                                    Asunto <span class="text-danger" aria-hidden="true">*</span>
                                 </label>
-                                <input type="text" name="subject" class="form-control" required>
+                                <input type="text" name="subject" class="form-control" value="{{ old('subject') }}" required>
                             </div>
                         </div>
 
@@ -38,7 +38,7 @@
                         <div class="col-md-3">
                             <div class="mb-3">
                                 <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <label class="form-label mb-0">Tipo</label>
+                                    <label class="form-label mb-0">Tipo <span class="text-danger" aria-hidden="true">*</span></label>
                                     @can('document-types.create')
                                         <button type="button" class="context-create-button context-create-button-inline" data-bs-toggle="modal"
                                             data-bs-target="#quickDocumentTypeModal">
@@ -62,7 +62,7 @@
                         <div class="col-md-3">
                             <div class="mb-3 position-relative">
                                 <label class="form-label">
-                                    Área origen
+                                    Área origen <span class="text-danger" aria-hidden="true">*</span>
                                 </label>
 
                                 <select name="area_id" id="area_id" class="form-select" required>
@@ -112,25 +112,50 @@
 
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Firma inicial</label>
+                                <label class="form-label">Flujo de aprobación <span class="text-secondary small">(opcional)</span></label>
+                                <select name="workflow_template_id" id="workflow_template_id" class="form-select">
+                                    <option value="">Sin flujo · gestión directa</option>
+                                    @foreach ($workflowTemplates as $workflowTemplate)
+                                        <option value="{{ $workflowTemplate->id }}">
+                                            {{ $workflowTemplate->name }}
+                                            @if ($workflowTemplate->documentType)
+                                                · {{ $workflowTemplate->documentType->name }}
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-hint">El flujo reemplaza la asignación puntual: define responsables, vistos buenos, aprobaciones y firmas.</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Acción de firma inicial</label>
                                 <select name="signature_mode" id="signature_mode" class="form-select">
                                     <option value="none">Sin firma por ahora</option>
-                                    <option value="self">Lo firmaré yo mismo</option>
-                                    <option value="request">Solicitar firma puntual a otro usuario</option>
+                                    <option value="self">Firmaré yo mismo después de guardar</option>
+                                    <option value="request">Solicitar firma a un usuario</option>
                                 </select>
-                                <div class="form-hint">La solicitud puntual no reemplaza un flujo formal de aprobaci&oacute;n.</div>
+                                <div class="form-hint">Si eliges firmarte a ti mismo, al guardar se abrirá el documento para elegir tu firma, visto bueno y ubicación.</div>
                             </div>
                         </div>
 
                         <div class="col-md-6 d-none" id="signerField">
                             <div class="mb-3">
-                                <label class="form-label">Usuario que debe firmar</label>
+                                <label class="form-label">Usuario que debe firmar <span class="text-danger" aria-hidden="true">*</span></label>
                                 <select name="signer_user_id" id="signer_user_id" class="form-select">
-                                    <option value="">Seleccionar</option>
-                                    @foreach ($signers as $signer)
-                                        <option value="{{ $signer->id }}">{{ $signer->name }}</option>
-                                    @endforeach
+                                    @if ($signers->isEmpty())
+                                        <option value="">No hay otros usuarios con firma activa</option>
+                                    @else
+                                        <option value="">Seleccionar</option>
+                                        @foreach ($signers as $signer)
+                                            <option value="{{ $signer->id }}">{{ $signer->name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
+                                @if ($signers->isEmpty())
+                                    <div class="form-hint text-warning">Registra y activa una firma para el usuario que debe firmar.</div>
+                                @endif
                             </div>
                         </div>
 
@@ -140,7 +165,7 @@
                                 <label class="form-label">
                                     Descripción
                                 </label>
-                                <textarea name="content" rows="4" class="form-control"></textarea>
+                                <textarea name="content" rows="4" class="form-control">{{ old('content') }}</textarea>
                             </div>
                         </div>
 
@@ -148,7 +173,7 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 <label class="form-label">
-                                    Documento PDF
+                                    Documento PDF <span class="text-danger" aria-hidden="true">*</span>
                                 </label>
                                 <input id="document_file" type="file" name="file" accept="application/pdf" class="form-control" required>
                                 <div id="selectedFileInfo" class="alert alert-info d-none mt-3 mb-0" role="status">

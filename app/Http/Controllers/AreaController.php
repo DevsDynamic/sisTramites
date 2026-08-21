@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Area;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Services\PlanLimitService;
 
 class AreaController extends Controller
 {
@@ -26,9 +27,10 @@ class AreaController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, PlanLimitService $planLimits)
     {
         $this->ensurePermission($request, 'areas.create');
+        $planLimits->ensureAvailable('areas');
 
         $data = $this->validateData($request);
         $data['active'] = $request->boolean('active');

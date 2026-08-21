@@ -1,0 +1,31 @@
+.signature-placement-canvas {
+    position: relative;
+    max-width: 100%;
+    overflow: hidden;
+    border: 1px solid var(--tblr-border-color);
+    background: #fff;
+}
+
+.signature-placement-canvas canvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.signature-placement-box {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    min-width: 80px;
+    min-height: 34px;
+    border: 2px dashed #206bc4;
+    background: rgb(32 107 196 / 18%);
+    color: #174b8f;
+    cursor: grab;
+    font-size: .75rem;
+    font-weight: 700;
+    touch-action: none;
+    user-select: none;
+}
+
+.signature-placement-box:active { cursor: grabbing; }

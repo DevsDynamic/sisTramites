@@ -47,7 +47,7 @@
                     <h5>📊 Carga por áreas</h5>
                     @foreach ($byArea as $area)
                         <div class="d-flex justify-content-between">
-                            <span>Área {{ $area->to_area_id }}</span>
+                            <span>{{ $area->responsibleArea?->name ?? 'Área no disponible' }}</span>
                             <strong>{{ $area->total }}</strong>
                         </div>
                     @endforeach
