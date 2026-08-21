@@ -185,6 +185,16 @@ class DocumentController extends Controller
             }
 
             if ($request->input('signature_mode') === 'self') {
+                DocumentSignatureRequest::create([
+                    'document_id' => $document->id,
+                    'signer_user_id' => $user->id,
+                    'requested_by' => $user->id,
+                    'sequence' => 1,
+                    'status' => 'pending',
+                ]);
+
+                $document->update(['status' => DocumentStatus::PENDING]);
+
                 DocumentStatusLog::create([
                     'document_id' => $document->id,
                     'action' => 'self_signature_selected',
@@ -271,7 +281,7 @@ class DocumentController extends Controller
 
         $padesConfigured = app(\App\Services\InternalPadesSigningService::class)->isConfigured();
 
-        return view('documents.show', compact('document', 'signatures', 'canSignWorkflowStep', 'padesConfigured'));
+        return view('documents.show', compact('document', 'signatures', 'canSign', 'canSignWorkflowStep', 'padesConfigured'));
     }
 
     public function attachmentFile(Request $request, Document $document, DocumentAttachment $attachment)

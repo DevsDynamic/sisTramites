@@ -180,9 +180,14 @@
                         <div class="alert alert-warning">
                             Esta etapa requiere una firma digital oficial. Registra una firma oficial activa antes de continuar.
                         </div>
-                    @elseif($signatures->isEmpty())
+                    @elseif(! $canSign)
                         <div class="alert alert-warning">
                             No tienes una firma pendiente o una etapa de firma asignada.
+                        </div>
+                    @elseif($signatures->isEmpty())
+                        <div class="alert alert-warning">
+                            <i class="ti ti-alert-triangle me-1"></i>
+                            No tienes una firma activa registrada. Crea o activa una firma propia para continuar.
                         </div>
                     @else
                         @if($canSignWorkflowStep)
