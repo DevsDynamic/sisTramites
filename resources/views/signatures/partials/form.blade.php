@@ -55,7 +55,7 @@
                 </button>
             </div>
             <label class="form-check mt-2">
-                <input type="checkbox" name="remember_certificate_password" id="{{ $prefix }}_remember_certificate_password" class="form-check-input">
+                <input type="checkbox" name="remember_certificate_password" id="{{ $prefix }}_remember_certificate_password" value="1" class="form-check-input">
                 <span class="form-check-label">Recordar la contraseña para firmar</span>
             </label>
             <div class="form-hint">
@@ -85,7 +85,7 @@
     </div>
 
     <label class="form-check form-switch">
-        <input type="checkbox" name="active" id="{{ $prefix }}_active" class="form-check-input" checked>
+        <input type="checkbox" name="active" id="{{ $prefix }}_active" value="1" class="form-check-input" checked>
         <span class="form-check-label">Activo</span>
     </label>
 </div>

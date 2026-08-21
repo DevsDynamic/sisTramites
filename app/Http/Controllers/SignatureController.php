@@ -257,6 +257,11 @@ class SignatureController extends Controller
         Request $request,
         ?Signature $signature = null
     ): array {
+        $request->merge([
+            'remember_certificate_password' => $request->boolean('remember_certificate_password'),
+            'active' => $request->boolean('active'),
+        ]);
+
         $data = $request->validate([
             'user_id' => ['required', 'exists:users,id'],
             'type' => ['required', Rule::in(['official', 'visual'])],
