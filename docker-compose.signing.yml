@@ -6,8 +6,8 @@ services:
     environment:
       TZ: America/Lima
       SIGNER_TOKEN: ${INTERNAL_SIGNER_TOKEN:?Define INTERNAL_SIGNER_TOKEN en .env}
-      SIGNER_MAX_FILE_SIZE: 50MB
-      SIGNER_MAX_REQUEST_SIZE: 60MB
+      SIGNER_MAX_FILE_SIZE: 100MB
+      SIGNER_MAX_REQUEST_SIZE: 110MB
     expose:
       - "8080"
     ports:
