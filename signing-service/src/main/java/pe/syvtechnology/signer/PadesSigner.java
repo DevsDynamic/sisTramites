@@ -120,8 +120,8 @@ public class PadesSigner {
         float pageWidth = box.getWidth();
         float pageHeight = box.getHeight();
         boolean vertical = "vertical".equals(request.orientation());
-        float width = vertical ? 110 : 190;
-        float height = vertical ? 125 : 80;
+        float width = vertical ? 110 : 188;
+        float height = vertical ? 112 : 72;
         int column = Math.floorMod(request.slot(), 2);
         int row = Math.max(0, request.slot() / 2);
         float x = column == 0 ? box.getLowerLeftX() + pageWidth - width - 24 : box.getLowerLeftX() + 24;
@@ -138,17 +138,22 @@ public class PadesSigner {
         y = Math.max(box.getLowerLeftY() + 4, Math.min(y, box.getUpperRightY() - height - 4));
 
         try (PDPageContentStream stream = new PDPageContentStream(document, page, AppendMode.APPEND, true, true)) {
-            stream.setNonStrokingColor(219f / 255f, 234f / 255f, 254f / 255f);
+            // Apariencia visible sobria: la validez depende de la firma PAdES,
+            // no de este sello visual.
+            stream.setNonStrokingColor(248f / 255f, 250f / 255f, 252f / 255f);
             stream.addRect(x, y, width, height);
             stream.fill();
-            stream.setStrokingColor(37f / 255f, 99f / 255f, 235f / 255f);
+            stream.setLineWidth(0.65f);
+            stream.setStrokingColor(148f / 255f, 163f / 255f, 184f / 255f);
             stream.addRect(x, y, width, height);
             stream.stroke();
             stream.beginText();
             stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA_BOLD), 8);
-            stream.setNonStrokingColor(30f / 255f, 64f / 255f, 175f / 255f);
+            stream.setNonStrokingColor(30f / 255f, 41f / 255f, 59f / 255f);
             stream.newLineAtOffset(x + 7, y + height - 14);
             stream.showText(safeText("approval".equals(request.appearanceType()) ? "VISTO BUENO DIGITAL (VB)" : "FIRMADO DIGITALMENTE"));
+            stream.setFont(new PDType1Font(Standard14Fonts.FontName.HELVETICA), 7.5f);
+            stream.setNonStrokingColor(51f / 255f, 65f / 255f, 85f / 255f);
             stream.newLineAtOffset(0, -13);
             String signerName = safeText(request.signerName());
             String signerDocument = safeText(request.signerDocument()).replaceFirst("(?i)^DNI\\s*:\\s*", "");
